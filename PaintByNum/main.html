@@ -9,16 +9,81 @@
 </head>
 
 <body onload="brython()">
-<script type="text/python">
+<script type="text/python3">
 from browser import document as doc
 from browser import alert
 
 def echo(*args):
-    alert("Hello %s !" %doc["zone"].value)
+    num_col = int(doc["numCols"].value)
+    num_row = int(doc["numRows"].value)
+    draw_grid(num_col, num_row)
 
 doc["test"].bind("click", echo)
+
+cellSize = 20
+canvas = doc["clock"]
+def draw_it2():
+    # draw clock border
+    ctx = canvas.getContext("2d")
+    ctx.beginPath()
+    ctx.lineWidth = 10
+    ctx.arc(125,125,100,0,2*3.14)
+    ctx.stroke()
+
+def draw_grid(num_col, num_row):
+    ctx = canvas.getContext("2d")
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx.beginPath();
+    height = cellSize * num_row
+    width = cellSize * num_col
+    for x in range(0,num_col+1):
+        ctx.moveTo(x*cellSize+.5, .5)
+        ctx.lineTo(x*cellSize+.5, height+.5)
+    for y in range(0,num_row+1):
+        ctx.moveTo(.5, y*cellSize+.5)
+        ctx.lineTo(width+.5, y*cellSize+.5)
+    ctx.lineWidth = 1
+    ctx.stroke()
+    set_cell(3,4,'_')
+    set_cell(4,5,'?')
+    set_cell(5,6,'X')
+
+# expected values for 'val' are '_', 'X', or '?'
+def set_cell(col, row, val):
+    # If ? or _, fill with white.  Else fill black.
+    # Then, if ?, put a little dot in the middle
+    ctx = canvas.getContext("2d")
+    upLeftX = col * cellSize + 1.5
+    upLeftY = row * cellSize + 1.5
+    ctx.beginPath()
+    ctx.rect(upLeftX, upLeftY, cellSize-2, cellSize-2)
+    color = 'white'
+    if (val == 'X'):
+        color = 'black'
+    ctx.fillStyle = color
+    ctx.strokeStyle = color
+    ctx.fill()
+    ctx.stroke()
+    if (val == '?'):
+        ctx.beginPath()
+        ctx.rect(upLeftX+5, upLeftY+5, cellSize-12, cellSize-12)
+        ctx.fillStyle = 'gray'
+        ctx.strokeStyle = 'grey'
+        ctx.fill()
+        ctx.stroke()
+
+
+
+draw_it2()
+
 </script>
-<p>Your name is : <input id="zone"><button id="test">clic !</button>
+<p>Number of columns: <input id="numCols"><br>
+<p>Number of rows: <input id="numRows"><br>
+<button id="test">Draw!</button><br><br><br>
+
+<canvas width="250" height="250" id="clock">
+</canvas>
+
 </body>
 
 </html>
