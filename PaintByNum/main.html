@@ -70,8 +70,44 @@ def set_cell(col, row, val):
     if (val == '?'):
         draw_filled_rect(ctx, upLeftX+5, upLeftY+5, cellSize-12, cellSize-12, 'grey')
 
+def nBlanks(n):
+  return '_________________________________________________________________________'[:n]
+
+def nFilled(n):
+  return 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'[:n]
+
+# Given 20 and '8 1 3', return a set of 20-character
+# strings, such as '__XXXXXXXX__X_XXX__', each representing one
+# way to fit groups of 8, 1, and 3 X's within 20 chars.
+def expand_pattern_root(total_len, pattern):
+  # Eg, pattern = "8 3 1"
+  pieces = [int(s) for s in pattern.split(' ')]
+  #print(pieces)
+  answers = expand_pattern(total_len, pieces)
+  print(answers)
+
+# Function, used recursively to help expand_pattern_root()
+# total_len is an int, and pieces is an array of ints.
+def expand_pattern(total_len, pieces):
+  answers = []
+  min_len = sum(pieces) + len(pieces) - 1
+  #print(min_len)
+  for startPt in range(0, total_len-min_len+1):
+    prefix = nBlanks(startPt) + nFilled(pieces[0])
+    #print(prefix)
+    if (len(pieces) > 1):
+      prefix += '_'
+      endings = expand_pattern(total_len-len(prefix), pieces[1:])
+      for ending in endings:
+        answers.append(prefix + ending)
+    else:
+      answers.append(prefix + nBlanks(total_len-len(prefix)))
+  return answers
+
 
 draw_it2()
+expand_pattern_root(20, "10 3 1")
+expand_pattern_root(20, "17")
 
 </script>
 <p>Number of columns: <input id="numCols"><br>
