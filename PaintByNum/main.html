@@ -48,6 +48,14 @@ def draw_grid(num_col, num_row):
     set_cell(4,5,'?')
     set_cell(5,6,'X')
 
+def draw_filled_rect(ctx, x, y, dx, dy, color):
+    ctx.beginPath()
+    ctx.rect(x, y, dx, dy)
+    ctx.fillStyle = color
+    ctx.strokeStyle = color
+    ctx.fill()
+    ctx.stroke()
+
 # expected values for 'val' are '_', 'X', or '?'
 def set_cell(col, row, val):
     # If ? or _, fill with white.  Else fill black.
@@ -55,23 +63,12 @@ def set_cell(col, row, val):
     ctx = canvas.getContext("2d")
     upLeftX = col * cellSize + 1.5
     upLeftY = row * cellSize + 1.5
-    ctx.beginPath()
-    ctx.rect(upLeftX, upLeftY, cellSize-2, cellSize-2)
     color = 'white'
     if (val == 'X'):
         color = 'black'
-    ctx.fillStyle = color
-    ctx.strokeStyle = color
-    ctx.fill()
-    ctx.stroke()
+    draw_filled_rect(ctx, upLeftX, upLeftY, cellSize-2, cellSize-2, color)
     if (val == '?'):
-        ctx.beginPath()
-        ctx.rect(upLeftX+5, upLeftY+5, cellSize-12, cellSize-12)
-        ctx.fillStyle = 'gray'
-        ctx.strokeStyle = 'grey'
-        ctx.fill()
-        ctx.stroke()
-
+        draw_filled_rect(ctx, upLeftX+5, upLeftY+5, cellSize-12, cellSize-12, 'grey')
 
 
 draw_it2()
