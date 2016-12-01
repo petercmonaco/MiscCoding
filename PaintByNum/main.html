@@ -15,7 +15,7 @@ from browser import alert
 
 
 canvas = doc["clock"]
-cellSize = 20
+cellSize = 16
 
 
 class A_Board:
@@ -137,6 +137,8 @@ def drawTheBoard():
   theBoard.redraw()
 
 doc["test"].bind("click", drawTheBoard)
+doc["numCols"].bind("change", drawTheBoard)
+doc["numRows"].bind("change", drawTheBoard)
 
 theBoard.redraw()
 
