@@ -13,24 +13,19 @@
 from browser import document as doc
 from browser import alert
 
-def echo(*args):
+
+canvas = doc["clock"]
+cellSize = 20
+
+
+class A_Board:
+  def __init__(self):
+    print("init done")
+
+  def redraw(self):
     num_col = int(doc["numCols"].value)
     num_row = int(doc["numRows"].value)
-    draw_grid(num_col, num_row)
 
-doc["test"].bind("click", echo)
-
-cellSize = 20
-canvas = doc["clock"]
-def draw_it2():
-    # draw clock border
-    ctx = canvas.getContext("2d")
-    ctx.beginPath()
-    ctx.lineWidth = 10
-    ctx.arc(125,125,100,0,2*3.14)
-    ctx.stroke()
-
-def draw_grid(num_col, num_row):
     ctx = canvas.getContext("2d")
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     ctx.beginPath();
@@ -137,7 +132,15 @@ class OptionSet:
     print(self.options)
 
 
-draw_it2()
+theBoard = A_Board()
+def drawTheBoard():
+  theBoard.redraw()
+
+doc["test"].bind("click", drawTheBoard)
+
+theBoard.redraw()
+
+
 a = OptionSet(20, "10 3 1")
 a.print()
 b = OptionSet(20, "17")
@@ -159,12 +162,40 @@ print(a.consensus())
 
 
 </script>
-<p>Number of columns: <input id="numCols"><br>
-<p>Number of rows: <input id="numRows"><br>
-<button id="test">Draw!</button><br><br><br>
+<table>
+  <tr>
+    <td></td>
+    <td>
 
-<canvas width="250" height="250" id="clock">
+<h3>Columns</h3>
+<table>
+<tr><td>Number:   </td><td> <input id="numCols" value=20>    </td></tr>
+<tr><td valign="top">Patterns:   </td><td> <textarea rows="4" cols="50">Patterns go here...</textarea>   </td></tr>
+</table>
+
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+
+<h3>Rows</h3>
+<table>
+<tr><td>Number:   </td><td> <input id="numRows" value=20>    </td></tr>
+<tr><td valign="top">Patterns:   </td><td> <textarea rows="4" cols="50">Row Patterns go here...</textarea>   </td></tr>
+<tr><td> <button id="test">Redraw!</button>   </td></tr>
+</table>
+
+    </td>
+    <td>
+
+<canvas width="500" height="500" id="clock">
 </canvas>
+
+    </td>
+  </tr>
+
+
+</table>
 
 </body>
 
