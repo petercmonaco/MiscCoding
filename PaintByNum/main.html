@@ -99,15 +99,62 @@ class OptionSet:
     # strings, such as '__XXXXXXXX__X_XXX__', each representing one
     # way to fit groups of 8, 1, and 3 X's within 20 chars.
     pieces = [int(s) for s in pattern.split(' ')]
+    self.dim = dimension
     self.options = expand_pattern(dimension, pieces)
+
+  def numOptions(self):
+    return len(self.options)
+
+  # Looks through char #iChar of all the options
+  # If all chars are the same, return that char.
+  # Else return '?'
+  def consensusOfChar(self, iChar):
+    c = self.options[0][iChar]
+    for iStr in range(1, len(self.options)):
+      c2 = self.options[iStr][iChar]
+      if (c2 != c):
+        return '?'
+    return c
+
+  def consensus(self):
+    if (len(self.options) == 0):
+      return "No Options in this OptionSet"
+    answer = "";
+    # iterate through the first char of all strings.  Then the second char, etc.
+    for iChar in range(0, self.dim):
+      answer += self.consensusOfChar(iChar)
+    return answer
+
+  # Call this to inform the OptionSet that the value at
+  # position #i is a '_' or 'X'.  It will remove options
+  # accordingly.  'i' is zero-based
+  def constrain(self, i, v):
+    for index in reversed(range(len(self.options))):
+      if (self.options[index][i] != v):
+        self.options.pop(index)
   
-#  def print():
-#    print(self.options)
+  def print(self):
+    print(self.options)
 
 
 draw_it2()
-print(OptionSet(20, "10 3 1").options)
-print(OptionSet(20, "17").options)
+a = OptionSet(20, "10 3 1")
+a.print()
+b = OptionSet(20, "17")
+print(b.options)
+print(b.numOptions())
+print(b.consensus())
+print('--------------')
+b.constrain(1, 'X')
+b.print()
+print(b.consensus())
+print('------------')
+print(a.consensus())
+a.constrain(11, '_')
+a.constrain(16, '_')
+a.print()
+print(a.consensus())
+
 
 
 
