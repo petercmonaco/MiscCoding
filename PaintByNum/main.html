@@ -68,6 +68,21 @@ class A_Board:
     ctx.font = "15px Arial";
     ctx.fillText(text, x, y);
 
+  def edit_row(self, rowNum):
+    self.row_being_edited = rowNum
+    # Move the text box there.
+    txtBox = doc["floatingRowTextInput"]
+    txtBox.value = ""
+    txtBox.left = 0
+    txtBox.top = (rowNum-1)*cellSize
+    txtBox.focus()
+
+  def row_edit_done(self):
+    text = doc["floatingRowTextInput"].value
+    self.write_row_text(self.row_being_edited, text)
+    self.edit_row(self.row_being_edited+1)
+
+############### END OF A_Board Class #############
 
 def draw_filled_rect(ctx, x, y, dx, dy, color):
     ctx.beginPath()
@@ -161,23 +176,32 @@ class OptionSet:
 ###
 theBoard = A_Board()
 
+############# Event Handlers #############
+
 def rowTextClicked(event):
     canvasRect = rowTextCanvas.getBoundingClientRect()
     x = event.x - canvasRect.left
     y = event.y - canvasRect.top
     #alert("x: " + str(x)+", y: "+str(y))
     rowNum = int(y/cellSize) + 1
-    theBoard.write_row_text(rowNum, "Click!")
+    theBoard.edit_row(rowNum)
+    #theBoard.write_row_text(rowNum, "Click!")
 
 
 def drawTheBoard():
   theBoard = A_Board()
   theBoard.redraw()
 
+def rowEditDone():
+  theBoard.row_edit_done()
+
+############# End of Event Handlers #####
+
 doc["test"].bind("click", drawTheBoard)
 doc["numCols"].bind("change", drawTheBoard)
 doc["numRows"].bind("change", drawTheBoard)
 doc["rowText"].bind("click", rowTextClicked)
+doc["floatingRowTextInput"].bind("change", rowEditDone)
 
 theBoard.redraw()
 theBoard.write_row_text(5, "R5")
@@ -231,8 +255,15 @@ print(a.consensus())
     </td>
     <td>
 
-<canvas width="100" height="500" id="rowText"></canvas>
-<canvas width="500" height="500" id="clock"></canvas>
+<div style="float:left">
+    <div style="position:relative;width:100px;height:500px;float:left">
+        <canvas width="100" height="500" id="rowText"></canvas>
+        <input type="text" id="floatingRowTextInput" style="position:absolute;left:10px;top:20px;width:97px;height:16px" />
+    </div>
+    <div style="position:relative;width:500px;height:500px;float:left">
+        <canvas width="500" height="500" id="clock"></canvas>
+    </div>
+</div>
 
 
     </td>
