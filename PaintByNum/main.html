@@ -14,7 +14,8 @@ from browser import document as doc
 from browser import alert
 
 
-canvas = doc["clock"]
+gridCanvas = doc["clock"]
+rowTextCanvas = doc["rowText"]
 cellSize = 16
 
 
@@ -26,11 +27,14 @@ class A_Board:
     num_col = int(doc["numCols"].value)
     num_row = int(doc["numRows"].value)
 
-    ctx = canvas.getContext("2d")
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    ctx = gridCanvas.getContext("2d")
+    # Draw the grid
+    ctx.clearRect(0, 0, gridCanvas.width, gridCanvas.height)
     ctx.beginPath();
     height = cellSize * num_row
     width = cellSize * num_col
+    draw_filled_rect(ctx, 0, 0, width+.5, height+.5, 'gray')
+    ctx.strokeStyle = 'black'
     for x in range(0,num_col+1):
         ctx.moveTo(x*cellSize+.5, .5)
         ctx.lineTo(x*cellSize+.5, height+.5)
@@ -40,8 +44,31 @@ class A_Board:
     ctx.lineWidth = 1
     ctx.stroke()
     set_cell(3,4,'_')
-    set_cell(4,5,'?')
     set_cell(5,6,'X')
+
+    # Draw the rowText
+    ctx = rowTextCanvas.getContext("2d")
+    ctx.clearRect(0, 0, rowTextCanvas.width, rowTextCanvas.height)
+    ctx.beginPath();
+    height = cellSize * num_row
+    width = rowTextCanvas.width
+    ctx.strokeStyle = 'black'
+    for x in (0, width-1):
+        ctx.moveTo(x+.5, .5)
+        ctx.lineTo(x+.5, height+.5)
+    for y in range(0,num_row+1):
+        ctx.moveTo(.5, y*cellSize+.5)
+        ctx.lineTo(width+.5, y*cellSize+.5)
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+  def write_row_text(self, rowNum, text):
+    x = 5
+    y = rowNum * cellSize - 2
+    ctx = rowTextCanvas.getContext("2d")
+    ctx.font = "15px Arial";
+    ctx.fillText(text, x, y);
+
 
 def draw_filled_rect(ctx, x, y, dx, dy, color):
     ctx.beginPath()
@@ -51,19 +78,18 @@ def draw_filled_rect(ctx, x, y, dx, dy, color):
     ctx.fill()
     ctx.stroke()
 
-# expected values for 'val' are '_', 'X', or '?'
+# expected values for 'val' are '_', 'X'
 def set_cell(col, row, val):
     # If ? or _, fill with white.  Else fill black.
     # Then, if ?, put a little dot in the middle
-    ctx = canvas.getContext("2d")
+    ctx = gridCanvas.getContext("2d")
     upLeftX = col * cellSize + 1.5
     upLeftY = row * cellSize + 1.5
     color = 'white'
     if (val == 'X'):
         color = 'black'
     draw_filled_rect(ctx, upLeftX, upLeftY, cellSize-2, cellSize-2, color)
-    if (val == '?'):
-        draw_filled_rect(ctx, upLeftX+5, upLeftY+5, cellSize-12, cellSize-12, 'grey')
+
 
 def nBlanks(n):
   return '_________________________________________________________________________'[:n]
@@ -141,6 +167,8 @@ doc["numCols"].bind("change", drawTheBoard)
 doc["numRows"].bind("change", drawTheBoard)
 
 theBoard.redraw()
+theBoard.write_row_text(5, "R5")
+theBoard.write_row_text(6, "1 1 1 1 1 1")
 
 
 a = OptionSet(20, "10 3 1")
@@ -190,8 +218,9 @@ print(a.consensus())
     </td>
     <td>
 
-<canvas width="500" height="500" id="clock">
-</canvas>
+<canvas width="100" height="500" id="rowText"></canvas>
+<canvas width="500" height="500" id="clock"></canvas>
+
 
     </td>
   </tr>
