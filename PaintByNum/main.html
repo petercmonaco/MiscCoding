@@ -157,18 +157,32 @@ class OptionSet:
   def print(self):
     print(self.options)
 
-
+###
+### Define *THE* Board
+###
 theBoard = A_Board()
+
+def rowTextClicked(event):
+    canvasRect = rowTextCanvas.getBoundingClientRect()
+    x = event.x - canvasRect.left
+    y = event.y - canvasRect.top
+    #alert("x: " + str(x)+", y: "+str(y))
+    rowNum = int(y/cellSize) + 1
+    theBoard.write_row_text(rowNum, "Click!")
+
+
 def drawTheBoard():
   theBoard.redraw()
 
 doc["test"].bind("click", drawTheBoard)
 doc["numCols"].bind("change", drawTheBoard)
 doc["numRows"].bind("change", drawTheBoard)
+doc["rowText"].bind("click", rowTextClicked)
 
 theBoard.redraw()
 theBoard.write_row_text(5, "R5")
 theBoard.write_row_text(6, "1 1 1 1 1 1")
+
 
 
 a = OptionSet(20, "10 3 1")
@@ -211,7 +225,6 @@ print(a.consensus())
 <h3>Rows</h3>
 <table>
 <tr><td>Number:   </td><td> <input id="numRows" value=20>    </td></tr>
-<tr><td valign="top">Patterns:   </td><td> <textarea rows="4" cols="50">Row Patterns go here...</textarea>   </td></tr>
 <tr><td> <button id="test">Redraw!</button>   </td></tr>
 </table>
 
