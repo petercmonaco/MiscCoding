@@ -31,6 +31,7 @@ class A_Board:
     self.num_col = int(doc["numCols"].value)
     self.num_row = int(doc["numRows"].value)
     self.row_patterns = [None] * self.num_row
+    self.col_patterns = [None] * self.num_col
 
     # the set of rows or cols that need to be evaulated
     self.dirtyRowsAndCols = set()
@@ -100,6 +101,16 @@ class A_Board:
     ctx.font = "15px Arial";
     ctx.fillText(text, x, y);
 
+  def write_col_text(self, colNum, text):
+    tokens = text.split()
+    x = colNum * cellSize + 2
+    y = 20
+    ctx = colTextCanvas.getContext("2d")
+    ctx.font = "15px Arial";
+    for token in tokens:
+      ctx.fillText(token, x, y)
+      y += 20
+
   def edit_row(self, rowNum):
     self.row_being_edited = rowNum
     # Move the text box there.
@@ -108,6 +119,15 @@ class A_Board:
     rowEntryBox.left = 0
     rowEntryBox.top = (rowNum)*cellSize
     rowEntryBox.focus()
+
+  def edit_col(self, colNum):
+    self.col_being_edited = colNum
+    # Move the text box there.
+    colEntryBox.style.display = 'block'  # Unhide the box
+    colEntryBox.value = ""
+    colEntryBox.left = colNum * cellSize
+    colEntryBox.top = 10
+    colEntryBox.focus()
 
   def row_edit_done(self):
     text = rowEntryBox.value
@@ -120,6 +140,19 @@ class A_Board:
     else:
       # Hide the box
       rowEntryBox.style.display = 'none'
+    self.eval_puzzle()
+
+  def col_edit_done(self):
+    text = colEntryBox.value
+    self.write_col_text(self.col_being_edited, text)
+    newPattern = OptionSet(self.num_row, text)
+    self.col_patterns[self.col_being_edited] = newPattern
+    self.dirtyRowsAndCols.add("col"+str(self.col_being_edited))
+    if ((self.col_being_edited+1) < self.num_col):
+      self.edit_col(self.col_being_edited+1)
+    else:
+      # Hide the box
+      colEntryBox.style.display = 'none'
     self.eval_puzzle()
 
   # Evaluates one row or column at a time, working from
@@ -269,6 +302,13 @@ def rowTextClicked(event):
     rowNum = int(y/cellSize)
     theBoard.edit_row(rowNum)
 
+def colTextClicked(event):
+    canvasRect = colTextCanvas.getBoundingClientRect()
+    x = event.x - canvasRect.left
+    y = event.y - canvasRect.top
+    colNum = int(x/cellSize)
+    theBoard.edit_col(colNum)
+
 def drawTheBoard():
   global theBoard
   theBoard = A_Board()
@@ -277,19 +317,21 @@ def drawTheBoard():
 def rowEditDone():
   theBoard.row_edit_done()
 
+def colEditDone():
+  theBoard.col_edit_done()
+
 ############# End of Event Handlers #####
 
+### Register event handlers
 doc["test"].bind("click", drawTheBoard)
 doc["numCols"].bind("change", drawTheBoard)
 doc["numRows"].bind("change", drawTheBoard)
-doc["rowText"].bind("click", rowTextClicked)
+rowTextCanvas.bind("click", rowTextClicked)
+colTextCanvas.bind("click", colTextClicked)
 rowEntryBox.bind("change", rowEditDone)
+colEntryBox.bind("change", colEditDone)
 
 theBoard.redraw()
-theBoard.write_row_text(5, "R5")
-theBoard.write_row_text(0, "Zero")
-theBoard.write_row_text(6, "1 1 1 1 1 1")
-
 
 
 #a = OptionSet(20, "10 3 1")
