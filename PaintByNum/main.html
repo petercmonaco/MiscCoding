@@ -104,12 +104,12 @@ class A_Board:
   def write_col_text(self, colNum, text):
     tokens = text.split()
     x = colNum * cellSize + 2
-    y = 20
+    y = 15
     ctx = colTextCanvas.getContext("2d")
     ctx.font = "15px Arial";
     for token in tokens:
       ctx.fillText(token, x, y)
-      y += 20
+      y += 15
 
   def edit_row(self, rowNum):
     self.row_being_edited = rowNum
@@ -165,17 +165,38 @@ class A_Board:
       n = int(elem[3:])
       #print("Parsed n is "+str(n))
       if elem.startswith('row'):
-        rowModel = self.model[n]
-        #print("rowModel is "+"".join(rowModel))
         pat = self.row_patterns[n]
-        if (pat != None):
-          for col in range(len(rowModel)):
-            if (rowModel[col] != '?'):
-              pat.constrain(col, rowModel[col])
-          consensus = pat.consensus()
-          for col in range(len(rowModel)):
-            if consensus[col] != '?':
-              self.update_cell(n, col, consensus[col])
+        self.eval_row_or_col(n, 0, 0, 1, pat, self.num_col)
+      elif elem.startswith('col'):
+        pat = self.col_patterns[n]
+        self.eval_row_or_col(0, n, 1, 0, pat, self.num_row)
+
+
+  # row0 and col0 define a starting location
+  # dRow and dCol define a direction of travel through the model
+  # num is the dimension of the model in the direction of travel
+  def eval_row_or_col(self, row0, col0, dRow, dCol, pattern, num):
+    if pattern == None:
+      return
+    r = row0
+    c = col0
+    for i in range(num):
+      #print("i=%d" % i)
+      mval = self.model[r][c]
+      #print("at (%d, %d) models is %s" % (r, c, mval))
+      if (mval != '?'):
+        pattern.constrain(i, mval)
+      r += dRow
+      c += dCol
+    consensus = pattern.consensus()
+    r = row0
+    c = col0
+    for i in range(num):
+      if consensus[i] != '?':
+        self.update_cell(r, c, consensus[i])
+      r += dRow
+      c += dCol
+
 
   def update_cell(self, row, col, val):
     #print("FYI: update_cell(%d, %d, %s)" % (row, col, val))
