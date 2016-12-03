@@ -16,26 +16,34 @@ from browser import alert
 
 gridCanvas = doc["clock"]
 rowTextCanvas = doc["rowText"]
-theTxtBox = doc["floatingInput"]
+colTextCanvas = doc["colText"]
+rowEntryBox = doc["floatingRowInput"]
+colEntryBox = doc["floatingColInput"]
 cellSize = 16
 
 
 ############### The A_Board Class #############
 class A_Board:
 
+  ### The constructor ###
   def __init__(self):
+
     self.num_col = int(doc["numCols"].value)
     self.num_row = int(doc["numRows"].value)
     self.row_patterns = [None] * self.num_row
+
+    # the set of rows or cols that need to be evaulated
     self.dirtyRowsAndCols = set()
+
+    # a list of lists of chars, representing the state of the grid
     self.model = [None] * self.num_row
     for i in range(self.num_row):
         self.model[i] = list('?' * self.num_col)
-    print("New Board")
-    print(self.model[0])
+
 
   def redraw(self):
     ctx = gridCanvas.getContext("2d")
+
     # Draw the grid
     ctx.clearRect(0, 0, gridCanvas.width, gridCanvas.height)
     ctx.beginPath();
@@ -51,8 +59,6 @@ class A_Board:
         ctx.lineTo(width+.5, y*cellSize+.5)
     ctx.lineWidth = 1
     ctx.stroke()
-    #set_cell(3,4,'_')
-    #set_cell(5,6,'X')
 
     # Draw the rowText
     ctx = rowTextCanvas.getContext("2d")
@@ -70,6 +76,23 @@ class A_Board:
     ctx.lineWidth = 1
     ctx.stroke()
 
+    # Draw the colText
+    ctx = colTextCanvas.getContext("2d")
+    ctx.clearRect(0, 0, colTextCanvas.width, colTextCanvas.height)
+    ctx.beginPath();
+    height = colTextCanvas.height
+    width = cellSize * self.num_col
+    ctx.strokeStyle = 'black'
+    for y in (0, height-1):
+        ctx.moveTo(.5, y+.5)
+        ctx.lineTo(width+.5, y+.5)
+    for x in range(0,self.num_col+1):
+        ctx.moveTo(x*cellSize +.5,.5)
+        ctx.lineTo(x*cellSize+.5, height+.5)
+    ctx.lineWidth = 1
+    ctx.stroke()
+
+
   def write_row_text(self, rowNum, text):
     x = 5
     y = (rowNum+1) * cellSize - 2
@@ -80,14 +103,14 @@ class A_Board:
   def edit_row(self, rowNum):
     self.row_being_edited = rowNum
     # Move the text box there.
-    theTxtBox.style.display = 'block'  # Unhide the box
-    theTxtBox.value = ""
-    theTxtBox.left = 0
-    theTxtBox.top = (rowNum)*cellSize
-    theTxtBox.focus()
+    rowEntryBox.style.display = 'block'  # Unhide the box
+    rowEntryBox.value = ""
+    rowEntryBox.left = 0
+    rowEntryBox.top = (rowNum)*cellSize
+    rowEntryBox.focus()
 
   def row_edit_done(self):
-    text = theTxtBox.value
+    text = rowEntryBox.value
     self.write_row_text(self.row_being_edited, text)
     newPattern = OptionSet(self.num_col, text)
     self.row_patterns[self.row_being_edited] = newPattern
@@ -96,9 +119,12 @@ class A_Board:
       self.edit_row(self.row_being_edited+1)
     else:
       # Hide the box
-      theTxtBox.style.display = 'none'
+      rowEntryBox.style.display = 'none'
     self.eval_puzzle()
 
+  # Evaluates one row or column at a time, working from
+  # the 'dirty' list.  Whenever a cell is modified, the
+  # dirty list is updated.  Repeats until dirty list is empty.
   def eval_puzzle(self):
     while len(self.dirtyRowsAndCols) > 0:
       elem = self.dirtyRowsAndCols.pop()
@@ -128,7 +154,7 @@ class A_Board:
       self.model[row][col] = val
       self.dirtyRowsAndCols.add("row"+str(row))
       self.dirtyRowsAndCols.add("col"+str(col))
-      set_cell(col, row, val)
+      render_cell(col, row, val)
     elif old_val != val:
       print("ERROR: can't set (%d, %d) to %s because it was %s" % (row, col, val, old_val))
 
@@ -148,7 +174,7 @@ def draw_filled_rect(ctx, x, y, dx, dy, color):
     ctx.stroke()
 
 # expected values for 'val' are '_', 'X'
-def set_cell(col, row, val):
+def render_cell(col, row, val):
     # If ? or _, fill with white.  Else fill black.
     # Then, if ?, put a little dot in the middle
     ctx = gridCanvas.getContext("2d")
@@ -257,7 +283,7 @@ doc["test"].bind("click", drawTheBoard)
 doc["numCols"].bind("change", drawTheBoard)
 doc["numRows"].bind("change", drawTheBoard)
 doc["rowText"].bind("click", rowTextClicked)
-theTxtBox.bind("change", rowEditDone)
+rowEntryBox.bind("change", rowEditDone)
 
 theBoard.redraw()
 theBoard.write_row_text(5, "R5")
@@ -289,45 +315,38 @@ theBoard.write_row_text(6, "1 1 1 1 1 1")
 </script>
 <table>
   <tr>
-    <td></td>
-    <td>
-
-<h3>Columns</h3>
-<table>
-<tr><td>Number:   </td><td> <input id="numCols" value=20>    </td></tr>
-<tr><td valign="top">Patterns:   </td><td> <textarea rows="4" cols="50">Patterns go here...</textarea>   </td></tr>
-</table>
-
-    </td>
+    <td><td><td>
+      Number of columns:<br>
+      <input id="numCols" value=20><br><br>
   </tr>
+
   <tr>
-    <td valign="top">
-
-<h3>Rows</h3>
-<table>
-<tr><td>Number:   </td><td> <input id="numRows" value=20>    </td></tr>
-<tr><td> <button id="test">Redraw!</button>   </td></tr>
-</table>
-
-    </td>
-    <td>
-
-<div style="float:left">
-    <div style="position:relative;width:100px;height:500px;float:left">
-        <canvas width="100" height="500" id="rowText"></canvas>
-        <input type="text" id="floatingInput" style="position:absolute;left:10px;top:20px;width:97px;height:16px;display:none" />
-    </div>
-    <div style="position:relative;width:500px;height:500px;float:left">
-        <canvas width="500" height="500" id="clock"></canvas>
-    </div>
-</div>
-
-
-    </td>
+    <td><td><td>
+      <div style="position:relative;width:500px;height:100px">
+        <canvas width="500" height="100" id="colText"></canvas>
+        <input type="text" id="floatingColInput"
+               style="position:absolute;left:10px;top:20px;width:97px;height:16px;display:none" />
+      </div>
   </tr>
 
-
+  <tr>
+    <td valign="top" width=200>
+      Number of rows:<br>
+      <input id="numRows" value=20><br><br>
+      <button id="test">Redraw!</button>
+    <td>
+      <div style="position:relative;width:100px;height:500px">
+        <canvas width="100" height="500" id="rowText"></canvas>
+        <input type="text" id="floatingRowInput"
+               style="position:absolute;left:10px;top:20px;width:97px;height:16px;display:none" />
+      </div>
+    <td>
+      <div style="position:relative;width:500px;height:500px">
+        <canvas width="500" height="500" id="clock"></canvas>
+      </div>
+  </tr>
 </table>
+
 
 </body>
 
