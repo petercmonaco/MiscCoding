@@ -16,6 +16,7 @@ from browser import alert
 
 gridCanvas = doc["clock"]
 rowTextCanvas = doc["rowText"]
+theTxtBox = doc["floatingInput"]
 cellSize = 16
 
 
@@ -71,20 +72,19 @@ class A_Board:
   def edit_row(self, rowNum):
     self.row_being_edited = rowNum
     # Move the text box there.
-    txtBox = doc["floatingRowTextInput"]
-    txtBox.style.display = 'block'
-    txtBox.value = ""
-    txtBox.left = 0
-    txtBox.top = (rowNum)*cellSize
-    txtBox.focus()
+    theTxtBox.style.display = 'block'
+    theTxtBox.value = ""
+    theTxtBox.left = 0
+    theTxtBox.top = (rowNum)*cellSize
+    theTxtBox.focus()
 
   def row_edit_done(self):
-    text = doc["floatingRowTextInput"].value
+    text = theTxtBox.value
     self.write_row_text(self.row_being_edited, text)
     if ((self.row_being_edited+1) < self.num_row):
       self.edit_row(self.row_being_edited+1)
     else:
-      doc["floatingRowTextInput"].style.display = 'none'
+      theTxtBox.style.display = 'none'
 
 ############### END OF A_Board Class #############
 
@@ -202,7 +202,7 @@ doc["test"].bind("click", drawTheBoard)
 doc["numCols"].bind("change", drawTheBoard)
 doc["numRows"].bind("change", drawTheBoard)
 doc["rowText"].bind("click", rowTextClicked)
-doc["floatingRowTextInput"].bind("change", rowEditDone)
+theTxtBox.bind("change", rowEditDone)
 
 theBoard.redraw()
 theBoard.write_row_text(5, "R5")
@@ -260,7 +260,7 @@ print(a.consensus())
 <div style="float:left">
     <div style="position:relative;width:100px;height:500px;float:left">
         <canvas width="100" height="500" id="rowText"></canvas>
-        <input type="text" id="floatingRowTextInput" style="position:absolute;left:10px;top:20px;width:97px;height:16px;display:none" />
+        <input type="text" id="floatingInput" style="position:absolute;left:10px;top:20px;width:97px;height:16px;display:none" />
     </div>
     <div style="position:relative;width:500px;height:500px;float:left">
         <canvas width="500" height="500" id="clock"></canvas>
