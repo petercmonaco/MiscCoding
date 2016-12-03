@@ -63,7 +63,7 @@ class A_Board:
 
   def write_row_text(self, rowNum, text):
     x = 5
-    y = rowNum * cellSize - 2
+    y = (rowNum+1) * cellSize - 2
     ctx = rowTextCanvas.getContext("2d")
     ctx.font = "15px Arial";
     ctx.fillText(text, x, y);
@@ -72,15 +72,19 @@ class A_Board:
     self.row_being_edited = rowNum
     # Move the text box there.
     txtBox = doc["floatingRowTextInput"]
+    txtBox.style.display = 'block'
     txtBox.value = ""
     txtBox.left = 0
-    txtBox.top = (rowNum-1)*cellSize
+    txtBox.top = (rowNum)*cellSize
     txtBox.focus()
 
   def row_edit_done(self):
     text = doc["floatingRowTextInput"].value
     self.write_row_text(self.row_being_edited, text)
-    self.edit_row(self.row_being_edited+1)
+    if ((self.row_being_edited+1) < self.num_row):
+      self.edit_row(self.row_being_edited+1)
+    else:
+      doc["floatingRowTextInput"].style.display = 'none'
 
 ############### END OF A_Board Class #############
 
@@ -182,11 +186,8 @@ def rowTextClicked(event):
     canvasRect = rowTextCanvas.getBoundingClientRect()
     x = event.x - canvasRect.left
     y = event.y - canvasRect.top
-    #alert("x: " + str(x)+", y: "+str(y))
-    rowNum = int(y/cellSize) + 1
+    rowNum = int(y/cellSize)
     theBoard.edit_row(rowNum)
-    #theBoard.write_row_text(rowNum, "Click!")
-
 
 def drawTheBoard():
   theBoard = A_Board()
@@ -205,6 +206,7 @@ doc["floatingRowTextInput"].bind("change", rowEditDone)
 
 theBoard.redraw()
 theBoard.write_row_text(5, "R5")
+theBoard.write_row_text(0, "Zero")
 theBoard.write_row_text(6, "1 1 1 1 1 1")
 
 
@@ -258,7 +260,7 @@ print(a.consensus())
 <div style="float:left">
     <div style="position:relative;width:100px;height:500px;float:left">
         <canvas width="100" height="500" id="rowText"></canvas>
-        <input type="text" id="floatingRowTextInput" style="position:absolute;left:10px;top:20px;width:97px;height:16px" />
+        <input type="text" id="floatingRowTextInput" style="position:absolute;left:10px;top:20px;width:97px;height:16px;display:none" />
     </div>
     <div style="position:relative;width:500px;height:500px;float:left">
         <canvas width="500" height="500" id="clock"></canvas>
