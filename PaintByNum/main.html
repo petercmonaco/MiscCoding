@@ -20,11 +20,19 @@ theTxtBox = doc["floatingInput"]
 cellSize = 16
 
 
+############### The A_Board Class #############
 class A_Board:
 
   def __init__(self):
     self.num_col = int(doc["numCols"].value)
     self.num_row = int(doc["numRows"].value)
+    self.row_patterns = [None] * self.num_row
+    self.dirtyRowsAndCols = set()
+    self.model = [None] * self.num_row
+    for i in range(self.num_row):
+        self.model[i] = list('?' * self.num_col)
+    print("New Board")
+    print(self.model[0])
 
   def redraw(self):
     ctx = gridCanvas.getContext("2d")
@@ -43,8 +51,8 @@ class A_Board:
         ctx.lineTo(width+.5, y*cellSize+.5)
     ctx.lineWidth = 1
     ctx.stroke()
-    set_cell(3,4,'_')
-    set_cell(5,6,'X')
+    #set_cell(3,4,'_')
+    #set_cell(5,6,'X')
 
     # Draw the rowText
     ctx = rowTextCanvas.getContext("2d")
@@ -72,7 +80,7 @@ class A_Board:
   def edit_row(self, rowNum):
     self.row_being_edited = rowNum
     # Move the text box there.
-    theTxtBox.style.display = 'block'
+    theTxtBox.style.display = 'block'  # Unhide the box
     theTxtBox.value = ""
     theTxtBox.left = 0
     theTxtBox.top = (rowNum)*cellSize
@@ -81,10 +89,53 @@ class A_Board:
   def row_edit_done(self):
     text = theTxtBox.value
     self.write_row_text(self.row_being_edited, text)
+    newPattern = OptionSet(self.num_col, text)
+    self.row_patterns[self.row_being_edited] = newPattern
+    self.dirtyRowsAndCols.add("row"+str(self.row_being_edited))
     if ((self.row_being_edited+1) < self.num_row):
       self.edit_row(self.row_being_edited+1)
     else:
+      # Hide the box
       theTxtBox.style.display = 'none'
+    self.eval_puzzle()
+
+  def eval_puzzle(self):
+    while len(self.dirtyRowsAndCols) > 0:
+      elem = self.dirtyRowsAndCols.pop()
+      #print("Popped elem is "+elem)
+      n = int(elem[3:])
+      #print("Parsed n is "+str(n))
+      if elem.startswith('row'):
+        rowModel = self.model[n]
+        #print("rowModel is "+"".join(rowModel))
+        pat = self.row_patterns[n]
+        if (pat != None):
+          for col in range(len(rowModel)):
+            if (rowModel[col] != '?'):
+              pat.constrain(col, rowModel[col])
+          consensus = pat.consensus()
+          for col in range(len(rowModel)):
+            if consensus[col] != '?':
+              self.update_cell(n, col, consensus[col])
+
+  def update_cell(self, row, col, val):
+    #print("FYI: update_cell(%d, %d, %s)" % (row, col, val))
+    if (val != '_') and (val != 'X'):
+      print("ERROR: update_cell(%d, %d, %s)" % (row, col, val))
+      return
+    old_val = self.model[row][col]
+    if old_val == '?':
+      self.model[row][col] = val
+      self.dirtyRowsAndCols.add("row"+str(row))
+      self.dirtyRowsAndCols.add("col"+str(col))
+      set_cell(col, row, val)
+    elif old_val != val:
+      print("ERROR: can't set (%d, %d) to %s because it was %s" % (row, col, val, old_val))
+
+  def print_size(self):
+    print("I am a %d x %d board" % (self.num_row, self.num_col))
+      
+
 
 ############### END OF A_Board Class #############
 
@@ -131,6 +182,7 @@ def expand_pattern(total_len, pieces):
       answers.append(prefix + nBlanks(total_len-len(prefix)))
   return answers
 
+############### The OptionSet Class #############
 class OptionSet:
   def __init__(self, dimension, pattern):
     # Eg, pattern = "8 3 1"
@@ -175,6 +227,8 @@ class OptionSet:
   def print(self):
     print(self.options)
 
+############### End of  OptionSet Class #############
+
 ###
 ### Define *THE* Board
 ###
@@ -190,6 +244,7 @@ def rowTextClicked(event):
     theBoard.edit_row(rowNum)
 
 def drawTheBoard():
+  global theBoard
   theBoard = A_Board()
   theBoard.redraw()
 
@@ -211,22 +266,22 @@ theBoard.write_row_text(6, "1 1 1 1 1 1")
 
 
 
-a = OptionSet(20, "10 3 1")
-a.print()
-b = OptionSet(20, "17")
-print(b.options)
-print(b.numOptions())
-print(b.consensus())
-print('--------------')
-b.constrain(1, 'X')
-b.print()
-print(b.consensus())
-print('------------')
-print(a.consensus())
-a.constrain(11, '_')
-a.constrain(16, '_')
-a.print()
-print(a.consensus())
+#a = OptionSet(20, "10 3 1")
+#a.print()
+#b = OptionSet(20, "17")
+#print(b.options)
+#print(b.numOptions())
+#print(b.consensus())
+#print('--------------')
+#b.constrain(1, 'X')
+#b.print()
+#print(b.consensus())
+#print('------------')
+#print(a.consensus())
+#a.constrain(11, '_')
+#a.constrain(16, '_')
+#a.print()
+#print(a.consensus())
 
 
 
