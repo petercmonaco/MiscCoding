@@ -215,6 +215,38 @@ class A_Board:
   def print_size(self):
     print("I am a %d x %d board" % (self.num_row, self.num_col))
       
+  def beautify(self):
+    ctx = gridCanvas.getContext("2d")
+    whiteSideLen = int(cellSize/2)-2
+    blackSideLen = int(cellSize/2)-3
+    for x in range(0,self.num_col-1):  # Stop in the 2nd-to-last row
+      for y in range(0, self.num_row-1):
+        fourSqPattern = self.model[y][x] + self.model[y][x+1] + self.model[y+1][x+1] + self.model[y+1][x]
+        centerX = (x+1)*cellSize + .5
+        centerY = (y+1)*cellSize + .5
+        if (fourSqPattern == "X___"):  # Solo black in upper left
+          draw_filled_triangle(ctx, centerX-1,centerY-1,-whiteSideLen,-whiteSideLen,'white')
+        elif (fourSqPattern == "_X__"):  # Solo black in upper right
+          draw_filled_triangle(ctx, centerX+1,centerY-1,whiteSideLen,-whiteSideLen,'white')
+        elif (fourSqPattern == "__X_"):  # Solo black in lower right
+          draw_filled_triangle(ctx, centerX+1,centerY+1,whiteSideLen,whiteSideLen,'white')
+        elif (fourSqPattern == "___X"):  # Solo black in lower left
+          draw_filled_triangle(ctx, centerX-1,centerY+1,-whiteSideLen,whiteSideLen,'white')
+        elif (fourSqPattern == "_XXX"):  # Solo white in upper left
+          draw_filled_triangle(ctx, centerX-1,centerY-1,-blackSideLen,-blackSideLen,'black')
+        elif (fourSqPattern == "X_XX"):  # Solo black in upper right
+          draw_filled_triangle(ctx, centerX+1,centerY-1,blackSideLen,-blackSideLen,'black')
+        elif (fourSqPattern == "XX_X"):  # Solo black in lower right
+          draw_filled_triangle(ctx, centerX+1,centerY+1,blackSideLen,blackSideLen,'black')
+        elif (fourSqPattern == "XXX_"):  # Solo black in lower left
+          draw_filled_triangle(ctx, centerX-1,centerY+1,-blackSideLen,blackSideLen,'black')
+
+  def unbeautify(self):
+    ctx = gridCanvas.getContext("2d")
+    for x in range(0,self.num_col):
+      for y in range(0, self.num_row):
+        render_cell(x, y, self.model[y][x])
+
 
 
 ############### END OF A_Board Class #############
@@ -227,6 +259,19 @@ def draw_filled_rect(ctx, x, y, dx, dy, color):
     ctx.fill()
     ctx.stroke()
 
+# x and y are the right-angle corner.
+def draw_filled_triangle(ctx, x, y, dx, dy, color):
+    ctx.beginPath()
+    ctx.moveTo(x,y)
+    ctx.lineTo(x+dx, y)
+    ctx.lineTo(x, y+dy)
+    ctx.lineTo(x, y)
+    ctx.closePath()
+    ctx.fillStyle = color
+    ctx.strokeStyle = color
+    ctx.fill()
+    ctx.stroke()
+
 # expected values for 'val' are '_', 'X'
 def render_cell(col, row, val):
     # If ? or _, fill with white.  Else fill black.
@@ -234,9 +279,12 @@ def render_cell(col, row, val):
     ctx = gridCanvas.getContext("2d")
     upLeftX = col * cellSize + 1.5
     upLeftY = row * cellSize + 1.5
-    color = 'white'
     if (val == 'X'):
         color = 'black'
+    elif (val == '_'):
+        color = 'white'
+    else:
+        color = 'grey'
     draw_filled_rect(ctx, upLeftX, upLeftY, cellSize-2, cellSize-2, color)
 
 
@@ -316,6 +364,12 @@ theBoard = A_Board()
 
 ############# Event Handlers #############
 
+def beautHandler():
+    theBoard.beautify()
+
+def unbeautHandler():
+    theBoard.unbeautify()
+
 def rowTextClicked(event):
     canvasRect = rowTextCanvas.getBoundingClientRect()
     x = event.x - canvasRect.left
@@ -344,7 +398,8 @@ def colEditDone():
 ############# End of Event Handlers #####
 
 ### Register event handlers
-doc["test"].bind("click", drawTheBoard)
+doc["beaut"].bind("click", beautHandler)
+doc["unbeaut"].bind("click", unbeautHandler)
 doc["numCols"].bind("change", drawTheBoard)
 doc["numRows"].bind("change", drawTheBoard)
 rowTextCanvas.bind("click", rowTextClicked)
@@ -372,6 +427,34 @@ theBoard.redraw()
 #a.print()
 #print(a.consensus())
 
+# Code to set up a board for testing beautification
+'''theBoard.update_cell(2,3,'X')
+theBoard.update_cell(3,3,'X')
+theBoard.update_cell(4,3,'X')
+theBoard.update_cell(5,3,'_')
+theBoard.update_cell(6,3,'_')
+theBoard.update_cell(7,3,'_')
+
+theBoard.update_cell(2,4,'X')
+theBoard.update_cell(3,4,'_')
+theBoard.update_cell(4,4,'X')
+theBoard.update_cell(5,4,'_')
+theBoard.update_cell(6,4,'X')
+theBoard.update_cell(7,4,'_')
+
+theBoard.update_cell(2,5,'X')
+theBoard.update_cell(3,5,'X')
+theBoard.update_cell(4,5,'X')
+theBoard.update_cell(5,5,'_')
+theBoard.update_cell(6,5,'_')
+theBoard.update_cell(7,5,'_')
+
+for x in range(10,18):
+  for y in range(10,18):
+    if (x == y or x == y+1):
+      theBoard.update_cell(x,y,'X')
+    else:
+      theBoard.update_cell(x,y,'_')'''
 
 
 
@@ -385,8 +468,8 @@ theBoard.redraw()
 
   <tr>
     <td><td><td>
-      <div style="position:relative;width:500px;height:100px">
-        <canvas width="500" height="100" id="colText"></canvas>
+      <div style="position:relative;width:1000px;height:100px">
+        <canvas width="1000" height="100" id="colText"></canvas>
         <input type="text" id="floatingColInput"
                style="position:absolute;left:10px;top:20px;width:97px;height:16px;display:none" />
       </div>
@@ -396,16 +479,17 @@ theBoard.redraw()
     <td valign="top" width=200>
       Number of rows:<br>
       <input id="numRows" value=20><br><br>
-      <button id="test">Redraw!</button>
+      <button id="beaut">Beautify</button><br>
+      <button id="unbeaut">Un-Beautify</button>
     <td>
-      <div style="position:relative;width:100px;height:500px">
-        <canvas width="100" height="500" id="rowText"></canvas>
+      <div style="position:relative;width:100px;height:1000px">
+        <canvas width="100" height="1000" id="rowText"></canvas>
         <input type="text" id="floatingRowInput"
                style="position:absolute;left:10px;top:20px;width:97px;height:16px;display:none" />
       </div>
     <td>
-      <div style="position:relative;width:500px;height:500px">
-        <canvas width="500" height="500" id="clock"></canvas>
+      <div style="position:relative;width:1000px;height:1000px">
+        <canvas width="1000" height="1000" id="clock"></canvas>
       </div>
   </tr>
 </table>
