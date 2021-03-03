@@ -28,18 +28,18 @@ class A_Board:
   ### The constructor ###
   def __init__(self):
 
-    self.num_col = int(doc["numCols"].value)
-    self.num_row = int(doc["numRows"].value)
-    self.row_patterns = [None] * self.num_row
-    self.col_patterns = [None] * self.num_col
+    self.num_cols = int(doc["numCols"].value)
+    self.num_rows = int(doc["numRows"].value)
+    self.row_options = [None] * self.num_rows
+    self.col_options = [None] * self.num_cols
 
     # the set of rows or cols that need to be evaulated
     self.dirtyRowsAndCols = set()
 
     # a list of lists of chars, representing the state of the grid
-    self.model = [None] * self.num_row
-    for i in range(self.num_row):
-        self.model[i] = list('?' * self.num_col)
+    self.model = [None] * self.num_rows
+    for i in range(self.num_rows):
+        self.model[i] = list('?' * self.num_cols)
 
 
   def redraw(self):
@@ -48,14 +48,17 @@ class A_Board:
     # Draw the grid
     ctx.clearRect(0, 0, gridCanvas.width, gridCanvas.height)
     ctx.beginPath();
-    height = cellSize * self.num_row
-    width = cellSize * self.num_col
+    height = cellSize * self.num_rows
+    width = cellSize * self.num_cols
     draw_filled_rect(ctx, 0, 0, width+.5, height+.5, 'gray')
     ctx.strokeStyle = 'black'
-    for x in range(0,self.num_col+1):
+    for x in range(0,self.num_cols+1):
         ctx.moveTo(x*cellSize+.5, .5)
         ctx.lineTo(x*cellSize+.5, height+.5)
-    for y in range(0,self.num_row+1):
+        if x%5 == 5:
+          ctx.moveTo(x*cellSize+.5, .5)
+          ctx.lineTo(x*cellSize+.5, height+.5)
+    for y in range(0,self.num_rows+1):
         ctx.moveTo(.5, y*cellSize+.5)
         ctx.lineTo(width+.5, y*cellSize+.5)
     ctx.lineWidth = 1
@@ -64,34 +67,40 @@ class A_Board:
     # Draw the rowText
     ctx = rowTextCanvas.getContext("2d")
     ctx.clearRect(0, 0, rowTextCanvas.width, rowTextCanvas.height)
-    ctx.beginPath();
-    height = cellSize * self.num_row
+    height = cellSize * self.num_rows
     width = rowTextCanvas.width
     ctx.strokeStyle = 'black'
     for x in (0, width-1):
+        ctx.beginPath();
         ctx.moveTo(x+.5, .5)
         ctx.lineTo(x+.5, height+.5)
-    for y in range(0,self.num_row+1):
+        ctx.lineWidth = 1
+        ctx.stroke()
+    for y in range(0,self.num_rows+1):
+        ctx.beginPath();
         ctx.moveTo(.5, y*cellSize+.5)
         ctx.lineTo(width+.5, y*cellSize+.5)
-    ctx.lineWidth = 1
-    ctx.stroke()
+        ctx.lineWidth = 2 if y%5 == 0 else 1
+        ctx.stroke()
 
     # Draw the colText
     ctx = colTextCanvas.getContext("2d")
     ctx.clearRect(0, 0, colTextCanvas.width, colTextCanvas.height)
-    ctx.beginPath();
     height = colTextCanvas.height
-    width = cellSize * self.num_col
+    width = cellSize * self.num_cols
     ctx.strokeStyle = 'black'
     for y in (0, height-1):
+        ctx.beginPath();
         ctx.moveTo(.5, y+.5)
         ctx.lineTo(width+.5, y+.5)
-    for x in range(0,self.num_col+1):
+        ctx.lineWidth = 1
+        ctx.stroke()
+    for x in range(0,self.num_cols+1):
+        ctx.beginPath();
         ctx.moveTo(x*cellSize +.5,.5)
         ctx.lineTo(x*cellSize+.5, height+.5)
-    ctx.lineWidth = 1
-    ctx.stroke()
+        ctx.lineWidth = 2 if x%5 == 0 else 1
+        ctx.stroke()
 
 
   def write_row_text(self, rowNum, text):
@@ -132,10 +141,11 @@ class A_Board:
   def row_edit_done(self):
     text = rowEntryBox.value
     self.write_row_text(self.row_being_edited, text)
-    newPattern = OptionSet(self.num_col, text)
-    self.row_patterns[self.row_being_edited] = newPattern
+    known_state = self.model[self.row_being_edited]
+    newPattern = OptionSet(self.num_cols, text, known_state)
+    self.row_options[self.row_being_edited] = newPattern
     self.dirtyRowsAndCols.add("row"+str(self.row_being_edited))
-    if ((self.row_being_edited+1) < self.num_row):
+    if ((self.row_being_edited+1) < self.num_rows):
       self.edit_row(self.row_being_edited+1)
     else:
       # Hide the box
@@ -145,10 +155,11 @@ class A_Board:
   def col_edit_done(self):
     text = colEntryBox.value
     self.write_col_text(self.col_being_edited, text)
-    newPattern = OptionSet(self.num_row, text)
-    self.col_patterns[self.col_being_edited] = newPattern
+    known_state = [self.model[i][self.col_being_edited] for i in range(self.num_rows)]
+    newPattern = OptionSet(self.num_rows, text, known_state)
+    self.col_options[self.col_being_edited] = newPattern
     self.dirtyRowsAndCols.add("col"+str(self.col_being_edited))
-    if ((self.col_being_edited+1) < self.num_col):
+    if ((self.col_being_edited+1) < self.num_cols):
       self.edit_col(self.col_being_edited+1)
     else:
       # Hide the box
@@ -165,18 +176,18 @@ class A_Board:
       n = int(elem[3:])
       #print("Parsed n is "+str(n))
       if elem.startswith('row'):
-        pat = self.row_patterns[n]
-        self.eval_row_or_col(n, 0, 0, 1, pat, self.num_col)
+        options = self.row_options[n]
+        self.eval_row_or_col(n, 0, 0, 1, options, self.num_cols)
       elif elem.startswith('col'):
-        pat = self.col_patterns[n]
-        self.eval_row_or_col(0, n, 1, 0, pat, self.num_row)
+	options = self.col_options[n]
+        self.eval_row_or_col(0, n, 1, 0, options, self.num_rows)
 
 
   # row0 and col0 define a starting location
   # dRow and dCol define a direction of travel through the model
   # num is the dimension of the model in the direction of travel
-  def eval_row_or_col(self, row0, col0, dRow, dCol, pattern, num):
-    if pattern == None:
+  def eval_row_or_col(self, row0, col0, dRow, dCol, options, num):
+    if options == None:
       return
     r = row0
     c = col0
@@ -185,10 +196,10 @@ class A_Board:
       mval = self.model[r][c]
       #print("at (%d, %d) models is %s" % (r, c, mval))
       if (mval != '?'):
-        pattern.constrain(i, mval)
+        options.constrain(i, mval)
       r += dRow
       c += dCol
-    consensus = pattern.consensus()
+    consensus = options.consensus()
     r = row0
     c = col0
     for i in range(num):
@@ -213,14 +224,14 @@ class A_Board:
       print("ERROR: can't set (%d, %d) to %s because it was %s" % (row, col, val, old_val))
 
   def print_size(self):
-    print("I am a %d x %d board" % (self.num_row, self.num_col))
+    print("I am a %d x %d board" % (self.num_rows, self.num_cols))
       
   def beautify(self):
     ctx = gridCanvas.getContext("2d")
     whiteSideLen = int(cellSize/2)-2
     blackSideLen = int(cellSize/2)-3
-    for x in range(0,self.num_col-1):  # Stop in the 2nd-to-last row
-      for y in range(0, self.num_row-1):
+    for x in range(0,self.num_cols-1):  # Stop in the 2nd-to-last row
+      for y in range(0, self.num_rows-1):
         fourSqPattern = self.model[y][x] + self.model[y][x+1] + self.model[y+1][x+1] + self.model[y+1][x]
         centerX = (x+1)*cellSize + .5
         centerY = (y+1)*cellSize + .5
@@ -243,8 +254,8 @@ class A_Board:
 
   def unbeautify(self):
     ctx = gridCanvas.getContext("2d")
-    for x in range(0,self.num_col):
-      for y in range(0, self.num_row):
+    for x in range(0,self.num_cols):
+      for y in range(0, self.num_rows):
         render_cell(x, y, self.model[y][x])
 
 
@@ -294,16 +305,24 @@ def nBlanks(n):
 def nFilled(n):
   return 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'[:n]
 
+def prefix_inconsistent_with_known_data(prefix, known_data):
+  for i in range(len(prefix)):
+    if known_data[i] != '?' and prefix[i] != known_data[i]:
+      return True
+  return False
+
 # Function, used recursively to help expand_pattern_root()
 # total_len is an int, and pieces is an array of ints.
-def expand_pattern(total_len, pieces):
+def expand_pattern(total_len, pieces, known_state):
   answers = []
   min_len = sum(pieces) + len(pieces) - 1
   for startPt in range(0, total_len-min_len+1):
     prefix = nBlanks(startPt) + nFilled(pieces[0])
+    if prefix_inconsistent_with_known_data(prefix, known_state):
+      continue
     if (len(pieces) > 1):
       prefix += '_'
-      endings = expand_pattern(total_len-len(prefix), pieces[1:])
+      endings = expand_pattern(total_len-len(prefix), pieces[1:], known_state[len(prefix):])
       for ending in endings:
         answers.append(prefix + ending)
     else:
@@ -312,14 +331,14 @@ def expand_pattern(total_len, pieces):
 
 ############### The OptionSet Class #############
 class OptionSet:
-  def __init__(self, dimension, pattern):
+  def __init__(self, dimension, pattern, known_state):
     # Eg, pattern = "8 3 1"
     # Given 20 and '8 1 3', return a set of 20-character
     # strings, such as '__XXXXXXXX__X_XXX__', each representing one
     # way to fit groups of 8, 1, and 3 X's within 20 chars.
     pieces = [int(s) for s in pattern.split(' ')]
     self.dim = dimension
-    self.options = expand_pattern(dimension, pieces)
+    self.options = expand_pattern(dimension, pieces, known_state)
 
   def numOptions(self):
     return len(self.options)
@@ -410,9 +429,10 @@ colEntryBox.bind("change", colEditDone)
 theBoard.redraw()
 
 
-#a = OptionSet(20, "10 3 1")
+#a = OptionSet(20, "10 3 1", "_?X???????????_?????")
+#print("### First OptionSet")
 #a.print()
-#b = OptionSet(20, "17")
+#b = OptionSet(20, "17", ['?'] * 20)
 #print(b.options)
 #print(b.numOptions())
 #print(b.consensus())
