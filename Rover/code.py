@@ -36,44 +36,113 @@ server = Server(pool, debug=True)
 websocket: Websocket = None
 
 HTML_TEMPLATE = """
+<!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>Websocket Client</title>
-    </head>
-    <body>
-        <p>CPU temperature: <strong>-</strong>&deg;C</p>
-        <p>NeoPixel Color: <input type="color"></p>
-        <script>
-            const cpuTemp = document.querySelector('strong');
-            const colorPicker = document.querySelector('input[type="color"]');
+<head>
+    <meta charset="UTF-8">
+    <title>Whiteboard Rover</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; }
+        #log { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; margin-bottom: 10px; }
+        #messageInput { width: calc(100% - 70px); padding: 8px; }
+        #sendButton { width: 60px; padding: 8px; }
+        .sent { color: blue; }
+        .received { color: green; }
+        .status { color: gray; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <h1>Whiteboard Rover Comm Interface</h1>
 
-            let ws = new WebSocket('ws://' + location.host + '/connect-websocket');
+    <div>
+        <label for="wsUrl">WebSocket URL:</label>
+        <input type="text" id="wsUrl" value="ws://IPADDR:5000/connect-websocket" size="40">
+        <button id="connectButton">Connect</button>
+        <button id="disconnectButton" disabled>Disconnect</button>
+    </div>
+    <p class="status">Status: <span id="connectionStatus">Closed</span></p>
 
-            ws.onopen = () => console.log('WebSocket connection opened');
-            ws.onclose = () => console.log('WebSocket connection closed');
-            ws.onmessage = event => cpuTemp.textContent = event.data;
-            ws.onerror = error => cpuTemp.textContent = error;
+    <div id="log"></div>
 
-            colorPicker.oninput = debounce(() => ws.send(colorPicker.value), 200);
+    <form id="messageForm">
+        <input type="text" id="messageInput" placeholder="Type a message...">
+        <button type="submit" id="sendButton" disabled>Send</button>
+    </form>
 
-            function debounce(callback, delay = 1000) {
-                let timeout
-                return (...args) => {
-                    clearTimeout(timeout)
-                    timeout = setTimeout(() => {
-                    callback(...args)
-                  }, delay)
-                }
+    <script>
+        const log = document.getElementById('log');
+        const messageInput = document.getElementById('messageInput');
+        const sendButton = document.getElementById('sendButton');
+        const connectButton = document.getElementById('connectButton');
+        const disconnectButton = document.getElementById('disconnectButton');
+        const statusSpan = document.getElementById('connectionStatus');
+        const wsUrlInput = document.getElementById('wsUrl');
+        let socket;
+
+        function appendLog(message, className) {
+            const item = document.createElement('div');
+            item.classList.add(className);
+            item.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+            log.appendChild(item);
+            // Scroll to the bottom
+            log.scrollTop = log.scrollHeight - log.clientHeight;
+        }
+
+        connectButton.addEventListener('click', () => {
+            const url = wsUrlInput.value;
+            if (!url) return;
+
+            socket = new WebSocket(url);
+
+            socket.onopen = (event) => {
+                statusSpan.textContent = 'Connected';
+                connectButton.disabled = true;
+                disconnectButton.disabled = false;
+                sendButton.disabled = false;
+                appendLog('Connection established', 'status');
+            };
+
+            socket.onmessage = (event) => {
+                appendLog('Received: ' + event.data, 'received');
+            };
+
+            socket.onclose = (event) => {
+                statusSpan.textContent = 'Closed';
+                connectButton.disabled = false;
+                disconnectButton.disabled = true;
+                sendButton.disabled = true;
+                appendLog('Connection closed', 'status');
+            };
+
+            socket.onerror = (error) => {
+                appendLog('Error: ' + error.message, 'status');
+            };
+        });
+
+        disconnectButton.addEventListener('click', () => {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.close();
             }
-        </script>
-    </body>
+        });
+
+        document.getElementById('messageForm').addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent page reload
+            const message = messageInput.value;
+            if (socket && socket.readyState === WebSocket.OPEN && message) {
+                socket.send(message);
+                appendLog('Sent: ' + message, 'sent');
+                messageInput.value = ''; // Clear input box
+            }
+        });
+    </script>
+</body>
 </html>
 """
 
 
-@server.route("/client", GET)
+@server.route("/", GET)
 def client(request: Request):
-    return Response(request, HTML_TEMPLATE, content_type="text/html")
+    return Response(request, HTML_TEMPLATE.replace("IPADDR", str(wifi.radio.ipv4_address)), content_type="text/html")
 
 
 @server.route("/connect-websocket", GET)
