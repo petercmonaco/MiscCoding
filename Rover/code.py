@@ -10,6 +10,7 @@ import adafruit_requests
 from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
+from display import display_text
 
 print(f"Connecting to {os.getenv('CIRCUITPY_WIFI_SSID')}")
 wifi.radio.connect(os.getenv("CIRCUITPY_WIFI_SSID"), os.getenv("CIRCUITPY_WIFI_PASSWORD"))
@@ -63,11 +64,13 @@ async def handle_websocket_requests():
             if (data := websocket.receive(fail_silently=True)) is not None:
                 print("Received: "+data)
                 websocket.send_message("Thanks for: " + data, fail_silently=True)
+                display_text(data)
 
         await async_sleep(0)
 
 
 async def main():
+    display_text("Waiting for cmd")
     await gather(
         create_task(handle_http_requests()),
         create_task(handle_websocket_requests()),
