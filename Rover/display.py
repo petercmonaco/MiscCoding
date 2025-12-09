@@ -16,31 +16,37 @@ FONTSCALE = 2
 BACKGROUND_COLOR = 0x80bfff  # Light Blue
 FOREGROUND_COLOR = 0xFFFFFF  # White
 TEXT_COLOR = 0x000000 # Black
+is_initialized = False
 
 display = board.DISPLAY
 
+# Make the display context
+splash = displayio.Group()
+display.root_group = splash
+
+color_bitmap = displayio.Bitmap(display.width, display.height, 1)
+color_palette = displayio.Palette(1)
+color_palette[0] = BACKGROUND_COLOR
+
+bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
+splash.append(bg_sprite)
+
+# Draw a smaller inner rectangle
+inner_bitmap = displayio.Bitmap(
+    display.width - BORDER * 2, display.height - BORDER * 2, 1
+)
+inner_palette = displayio.Palette(1)
+inner_palette[0] = FOREGROUND_COLOR
+inner_sprite = displayio.TileGrid(
+    inner_bitmap, pixel_shader=inner_palette, x=BORDER, y=BORDER
+)
+splash.append(inner_sprite)
+
+
 def display_text(text):
-    # Make the display context
-    splash = displayio.Group()
-    display.root_group = splash
-
-    color_bitmap = displayio.Bitmap(display.width, display.height, 1)
-    color_palette = displayio.Palette(1)
-    color_palette[0] = BACKGROUND_COLOR
-
-    bg_sprite = displayio.TileGrid(color_bitmap, pixel_shader=color_palette, x=0, y=0)
-    splash.append(bg_sprite)
-
-    # Draw a smaller inner rectangle
-    inner_bitmap = displayio.Bitmap(
-        display.width - BORDER * 2, display.height - BORDER * 2, 1
-    )
-    inner_palette = displayio.Palette(1)
-    inner_palette[0] = FOREGROUND_COLOR
-    inner_sprite = displayio.TileGrid(
-        inner_bitmap, pixel_shader=inner_palette, x=BORDER, y=BORDER
-    )
-    splash.append(inner_sprite)
+    global is_initialized
+    if is_initialized:
+        splash.pop()
 
     # Draw a label
     text_area = label.Label(terminalio.FONT, text=text, color=TEXT_COLOR)
@@ -53,3 +59,5 @@ def display_text(text):
     text_group.append(text_area)  # Subgroup for text scaling
     splash.append(text_group)
 
+    is_initialized = True
+    
