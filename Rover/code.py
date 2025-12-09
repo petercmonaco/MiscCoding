@@ -3,26 +3,13 @@
 # SPDX-License-Identifier: MIT
 
 import os
-import ipaddress
 import ssl
 import wifi
 import socketpool
 import adafruit_requests
 from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
-
-import socketpool
-
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
-
-#print("ESP32-S2 WebClient Test")
-#print(f"My MAC address: {[hex(i) for i in wifi.radio.mac_address]}")
-
-#print("Available WiFi networks:")
-#for network in wifi.radio.start_scanning_networks():
-#    print("\t%s\t\tRSSI: %d\tChannel: %d" % (str(network.ssid, "utf-8"),
-#                                             network.rssi, network.channel))
-#wifi.radio.stop_scanning_networks()
 
 print(f"Connecting to {os.getenv('CIRCUITPY_WIFI_SSID')}")
 wifi.radio.connect(os.getenv("CIRCUITPY_WIFI_SSID"), os.getenv("CIRCUITPY_WIFI_PASSWORD"))
