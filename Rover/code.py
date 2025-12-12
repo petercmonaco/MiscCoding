@@ -11,6 +11,7 @@ from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
 from display import display_text
+from adafruit_motorkit import MotorKit
 
 print(f"Connecting to {os.getenv('CIRCUITPY_WIFI_SSID')}")
 wifi.radio.connect(os.getenv("CIRCUITPY_WIFI_SSID"), os.getenv("CIRCUITPY_WIFI_PASSWORD"))
@@ -50,6 +51,23 @@ def connect_client(request: Request):
 
 server.start(str(wifi.radio.ipv4_address))
 
+# Motor Stuff
+motorkit = MotorKit() # Implicit args: address=0x60, i2c=board.I2C()
+
+def execute_cmd(cmd):
+    if cmd == 'stop':
+        motorkit.motor1.throttle = 0
+        motorkit.motor2.throttle = 0
+    elif cmd == 'drive':
+        motorkit.motor1.throttle = 1
+        motorkit.motor2.throttle = 1
+    elif cmd == 'rotate left':
+        motorkit.motor1.throttle = -1
+        motorkit.motor2.throttle = 1
+    elif cmd == 'rotate right':
+        motorkit.motor1.throttle = 1
+        motorkit.motor2.throttle = -1
+
 
 async def handle_http_requests():
     while True:
@@ -65,6 +83,7 @@ async def handle_websocket_requests():
                 print("Received: "+data)
                 websocket.send_message("Thanks for: " + data, fail_silently=True)
                 display_text(data)
+                execute_cmd(data)
 
         await async_sleep(0)
 
