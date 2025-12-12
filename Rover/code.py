@@ -12,6 +12,9 @@ from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
 from display import display_text
 from adafruit_motorkit import MotorKit
+import board
+import alarm
+import adafruit_max1704x
 
 print(f"Connecting to {os.getenv('CIRCUITPY_WIFI_SSID')}")
 wifi.radio.connect(os.getenv("CIRCUITPY_WIFI_SSID"), os.getenv("CIRCUITPY_WIFI_PASSWORD"))
@@ -54,6 +57,9 @@ server.start(str(wifi.radio.ipv4_address))
 # Motor Stuff
 motorkit = MotorKit() # Implicit args: address=0x60, i2c=board.I2C()
 
+# Battery monitor
+bm = adafruit_max1704x.MAX17048(board.I2C())
+
 def execute_cmd(cmd):
     if cmd == 'stop':
         motorkit.motor1.throttle = 0
@@ -67,6 +73,13 @@ def execute_cmd(cmd):
     elif cmd == 'rotate right':
         motorkit.motor1.throttle = 1
         motorkit.motor2.throttle = -1
+    elif cmd == 'sleep':
+        motorkit.motor1.throttle = 0
+        motorkit.motor2.throttle = 0
+        alarm.exit_and_deep_sleep_until_alarms()
+    elif cmd == 'battery':
+        display_text(f"Battery at {bm.cell_percent:.1f}%")
+
 
 
 async def handle_http_requests():
