@@ -44,7 +44,7 @@
         function appendLog(message, className) {
             const item = document.createElement('div');
             item.classList.add(className);
-            item.textContent = new Date().toLocaleTimeString() + ' - ' + message;
+            item.textContent = new Date().toLocaleTimeString() + " " + message;
             log.appendChild(item);
             // Scroll to the bottom
             log.scrollTop = log.scrollHeight - log.clientHeight;
@@ -65,7 +65,7 @@
             };
 
             socket.onmessage = (event) => {
-                appendLog('Received: ' + event.data, 'received');
+                appendLog('<-- ' + event.data, 'received');
             };
 
             socket.onclose = (event) => {
@@ -92,7 +92,7 @@
             const message = messageInput.value;
             if (socket && socket.readyState === WebSocket.OPEN && message) {
                 socket.send(message);
-                appendLog('Sent: ' + message, 'sent');
+                appendLog('--> ' + message, 'sent');
                 messageInput.value = ''; // Clear input box
             }
         });

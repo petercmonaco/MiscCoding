@@ -76,9 +76,15 @@ def execute_cmd(cmd):
     elif cmd == 'sleep':
         motorkit.motor1.throttle = 0
         motorkit.motor2.throttle = 0
-        alarm.exit_and_deep_sleep_until_alarms()
+        alarm.exit_and_deep_sleep_until_alarms(alarm.pin.PinAlarm(pin=board.D0, value=False))
     elif cmd == 'battery':
         display_text(f"Battery at {bm.cell_percent:.1f}%")
+    elif cmd == 'ping':
+        websocket.send_message("Pong", fail_silently=True)
+    elif cmd == 'status':
+        websocket.send_message(f"Battery: {bm.cell_percent:.1f}%", fail_silently=True)
+    else:
+        websocket.send_message("Unknown command: " + cmd, fail_silently=True)
 
 
 
@@ -94,7 +100,7 @@ async def handle_websocket_requests():
         if websocket is not None:
             if (data := websocket.receive(fail_silently=True)) is not None:
                 print("Received: "+data)
-                websocket.send_message("Thanks for: " + data, fail_silently=True)
+                # websocket.send_message("Thanks for: " + data, fail_silently=True)
                 display_text(data)
                 execute_cmd(data)
 
