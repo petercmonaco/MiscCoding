@@ -1,23 +1,40 @@
 import json
 import math
 
-def relative_point(x, y, angle, distance):
-    """
-    Calculate a point relative to (x, y) at a certain angle and distance.
+class Point:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-    Parameters:
-    x (float): Starting x-coordinate.
-    y (float): Starting y-coordinate.
-    angle (float): Heading in degrees.
-    distance (float): Distance from the starting point.
+    def relative_point(self, angle, distance):
+        """
+        Calculate a point relative to self at a certain angle and distance.
 
-    Returns:
-    tuple: New (x, y) coordinates.
-    """
-    rad = math.radians(angle)
-    new_x = x + distance * math.sin(rad)
-    new_y = y + distance * math.cos(rad)
-    return new_x, new_y
+        Parameters:
+        angle (float): Heading in degrees.
+        distance (float): Distance from the starting point.
+
+        Returns:
+        Point: New point at the specified angle and distance.
+        """
+        rad = math.radians(angle)
+        new_x = self.x + distance * math.sin(rad)
+        new_y = self.y + distance * math.cos(rad)
+        return Point(new_x, new_y)
+
+class Circle:
+    def __init__(self, p, r, dir):
+        """Dir is either 'L' or 'R' for left or right turn."""
+        self.x = p.x
+        self.y = p.y
+        self.r = r
+        self.dir = dir
+
+    def to_dict(self):
+        return {
+            "type": "circle",
+            **self.__dict__
+        }
 
 def plan_route(arena_width, area_height, x1, y1, hdg1, x2, y2, hdg2, min_radius):
     """
@@ -40,33 +57,25 @@ def plan_route(arena_width, area_height, x1, y1, hdg1, x2, y2, hdg2, min_radius)
     str: JSON string describing the plan.
     """
 
-    start_left_center_x, start_left_center_y = relative_point(x1, y1, hdg1 - 90, min_radius)
-    start_right_center_x, start_right_center_y = relative_point(x1, y1, hdg1 + 90, min_radius)
+    r = min_radius # Later, add option to reduce this for a tight manuever
+
+    start_point = Point(x1, y1)
+    end_point = Point(x2, y2)
+    start_left_circle = Circle(start_point.relative_point(hdg1 - 90, r), r, "L")
+    start_right_circle = Circle(start_point.relative_point(hdg1 + 90, r), r, "R")
+    end_left_circle = Circle(end_point.relative_point(hdg2 - 90, r), r, "L")
+    end_right_circle = Circle(end_point.relative_point(hdg2 + 90, r), r, "R")
 
     plan = {
         "width": float(arena_width), 
         "height": float(area_height),
         "shapes": [
-            {
-            "type": "rover_end",
-            "x": x2,
-            "y": y2,
-            "hdg": hdg2
-            },
-            {
-            "type": "rover_start",
-            "x": x1,
-            "y": y1,
-            "hdg": hdg1},
-        {"type": "circle",
-         "x": start_left_center_x,
-         "y": start_left_center_y,
-         "r": min_radius},
-
-        {"type": "circle",
-         "x": start_right_center_x,
-         "y": start_right_center_y,
-         "r": min_radius}
+            {"type": "rover_start", "x": x1, "y": y1, "hdg": hdg1},
+            {"type": "rover_end", "x": x2, "y": y2, "hdg": hdg2},
+            start_left_circle.to_dict(),
+            start_right_circle.to_dict(),
+            end_left_circle.to_dict(),
+            end_right_circle.to_dict()
         ]
     }
 
