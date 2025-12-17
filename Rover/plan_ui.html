@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Plan UI - Shape Renderer</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Roboto, Arial; margin: 0; display:flex; height:100vh; }
+    .left { width:420px; padding:12px; box-sizing:border-box; border-right:1px solid #ddd; overflow:auto }
+    .right { flex:1; display:flex; flex-direction:column }
+    textarea { width:100%; height:60vh; font-family: monospace; font-size:13px }
+    button { margin-top:8px; padding:8px 12px; }
+    #canvasWrap { flex:1; display:flex; align-items:center; justify-content:center; background:#f7f7f7 }
+    canvas { background:white; border:1px solid #ccc }
+    .controls { display:flex; gap:8px; margin-top:8px; align-items:center }
+    label { font-size:13px }
+    .hint { font-size:12px; color:#666; margin-top:8px }
+    .small { font-size:12px; color:#444 }
+  </style>
+</head>
+<body>
+  <div class="left">
+    <h3>JSON Shape Description</h3>
+    <textarea id="jsonIn" spellcheck="false"></textarea>
+    <div class="controls">
+      <button id="renderBtn">Render</button>
+      <button id="sampleBtn">Load Sample</button>
+      <button id="clearBtn">Clear</button>
+      <label class="small">Scale: <input id="scale" type="number" value="1" step="0.25" style="width:70px"></label>
+    </div>
+    <div class="hint">Shapes supported: <b>circle</b>, <b>arc</b>, <b>line</b>, <b>arrow</b>. Coordinates in pixels.</div>
+    <div class="hint">Arc angles default to radians. Set property <code>deg: true</code> inside an arc to use degrees.</div>
+  </div>
+
+  <div class="right">
+    <div id="canvasWrap">
+      <canvas id="c"></canvas>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+  const jsonIn = document.getElementById('jsonIn');
+  const renderBtn = document.getElementById('renderBtn');
+  const sampleBtn = document.getElementById('sampleBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const scaleInput = document.getElementById('scale');
+
+  function resizeCanvas(w=800,h=600){
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+
+  function clear(){ ctx.clearRect(0,0,canvas.width,canvas.height); }
+
+  function drawCircle(item){
+    const {x=0,y=0,r=10,stroke='#000',fill=null,strokeWidth=1} = item;
+    ctx.beginPath();
+    ctx.lineWidth = strokeWidth;
+    ctx.arc(x,y,r,0,Math.PI*2);
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle = stroke; ctx.stroke(); }
+  }
+
+  function drawLine(item){
+    const {x1=0,y1=0,x2=0,y2=0,stroke='#000',strokeWidth=1} = item;
+    ctx.beginPath();
+    ctx.lineWidth = strokeWidth;
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.strokeStyle = stroke;
+    ctx.stroke();
+  }
+
+  function drawArc(item){
+    let {x=0,y=0,r=10,start=0,end=Math.PI*2,anticlockwise=false,stroke='#000',fill=null,strokeWidth=1,deg=false} = item;
+    if(deg){ start = start * Math.PI/180; end = end * Math.PI/180; }
+    ctx.beginPath();
+    ctx.lineWidth = strokeWidth;
+    ctx.arc(x,y,r,start,end,!!anticlockwise);
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle = stroke; ctx.stroke(); }
+  }
+
+  function drawArrow(item){
+    // arrow from (x1,y1) -> (x2,y2)
+    const {x1=0,y1=0,x2=0,y2=0,stroke='#000',strokeWidth=1,headLength=12,headAngle=25} = item;
+    // line
+    ctx.beginPath();
+    ctx.lineWidth = strokeWidth;
+    ctx.strokeStyle = stroke;
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+    // head
+    const dx = x2 - x1; const dy = y2 - y1;
+    const angle = Math.atan2(dy,dx);
+    const hl = headLength;
+    const ha = headAngle * Math.PI/180;
+    const xA = x2 - hl * Math.cos(angle - ha);
+    const yA = y2 - hl * Math.sin(angle - ha);
+    const xB = x2 - hl * Math.cos(angle + ha);
+    const yB = y2 - hl * Math.sin(angle + ha);
+    ctx.beginPath();
+    ctx.moveTo(x2,y2);
+    ctx.lineTo(xA,yA);
+    ctx.lineTo(xB,yB);
+    ctx.closePath();
+    ctx.fillStyle = stroke;
+    ctx.fill();
+  }
+
+  function drawVectorArrow(x, y, angleDeg, length=50, stroke='#000', strokeWidth=1, headLength=12){
+    const angleRad = angleDeg * Math.PI/180;
+    const x2 = x + length * Math.sin(angleRad);
+    const y2 = y - length * Math.cos(angleRad);
+    drawArrow({x1:x, y1:y, x2:x2, y2:y2, stroke:stroke, strokeWidth:strokeWidth, headLength:headLength});
+  }
+
+  function drawRect(item){
+    // centered rectangle at (x,y) with width, height and rotation (degrees)
+    const {x=0,y=0,width=100,height=50,rotation=0,stroke='#000',fill=null,strokeWidth=1} = item;
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate((rotation||0) * Math.PI/180);
+    ctx.beginPath();
+    ctx.lineWidth = strokeWidth;
+    const hw = width/2, hh = height/2;
+    ctx.rect(-hw, -hh, width, height);
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle = stroke; ctx.stroke(); }
+    ctx.restore();
+  }
+
+  function drawRover(item, color){
+    drawRect({
+      ...item,
+      width:40,
+      height:20,
+      rotation:item.hdg||0,
+      stroke:color,
+      strokeWidth:3
+    });
+    drawVectorArrow(
+      item.x || 0,
+      item.y || 0,
+      item.hdg || 0,
+      25,
+      color,
+      3,
+      10
+    );
+  }
+
+  function drawRoverStart(item){
+    drawRover(item, '#aaaaaa');
+  }
+
+  function drawRoverEnd(item){
+    drawRover(item, '#03740b');
+  }
+
+  function transformShapeForBottomLeft(s, coordHeight){
+    if(!s) return s;
+    // shallow clone so we don't mutate original JSON
+    const t = Object.assign({}, s);
+    if(Object.prototype.hasOwnProperty.call(t, 'y')) t.y = (coordHeight) - (t.y || 0);
+    if(Object.prototype.hasOwnProperty.call(t, 'y1')) t.y1 = (coordHeight) - (t.y1 || 0);
+    if(Object.prototype.hasOwnProperty.call(t, 'y2')) t.y2 = (coordHeight) - (t.y2 || 0);
+    return t;
+  }
+
+  function renderFromObject(obj){
+    // obj: { width, height, scale, shapes: [ ... ] }
+    const width = obj.width || Math.max(600, window.innerWidth - 440);
+    const height = obj.height || Math.max(400, window.innerHeight - 40);
+    const scale = (obj.scale || 1) * (parseFloat(scaleInput.value) || 1);
+    resizeCanvas(Math.round(width * scale), Math.round(height * scale));
+    clear();
+    // optional background
+    if(obj.background){ ctx.save(); ctx.fillStyle = obj.background; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore(); }
+    const shapes = obj.shapes || [];
+    const coordHeight = height * scale;
+    const drawShapes = shapes.map(s => transformShapeForBottomLeft(s, coordHeight));
+    for(const s of drawShapes){
+      try{
+        switch(s.type){
+          case 'circle': drawCircle(s); break;
+          case 'arc': drawArc(s); break;
+          case 'line': drawLine(s); break;
+          case 'arrow': drawArrow(s); break;
+          case 'rect': drawRect(s); break;
+          case 'rover_start': drawRoverStart(s); break;
+          case 'rover_end': drawRoverEnd(s); break;
+          default: console.warn('Unknown shape type', s.type); break;
+        }
+      }catch(e){ console.error('Error drawing shape', e); }
+    }
+  }
+
+  function renderFromText(){
+    const v = jsonIn.value.trim();
+    if(!v) return;
+    let obj;
+    try{ obj = JSON.parse(v); }
+    catch(e){ alert('Invalid JSON: '+e.message); return; }
+    renderFromObject(obj);
+  }
+
+  renderBtn.addEventListener('click', renderFromText);
+  scaleInput.addEventListener('change', renderFromText);
+  clearBtn.addEventListener('click', ()=>{ jsonIn.value = ''; clear(); });
+  sampleBtn.addEventListener('click', ()=> jsonIn.value = sampleJSON);
+
+  // sample JSON
+  const sampleJSON = JSON.stringify({
+    width:800,
+    height:600,
+    background:'#ffffff',
+    scale:1,
+    shapes:[
+      { type:'circle', x:150, y:120, r:40, stroke:'#1a73e8', fill:'#dbe9ff', strokeWidth:2 },
+      { type:'circle', x:400, y:200, r:80, stroke:'#e53935', strokeWidth:3, fill:null },
+      { type:'line', x1:50, y1:300, x2:750, y2:300, stroke:'#333', strokeWidth:1 },
+      { type:'arrow', x1:100, y1:400, x2:300, y2:500, stroke:'#2e7d32', strokeWidth:2, headLength:14 },
+      { type:'arc', x:600, y:150, r:80, start:0, end:270, deg:true, stroke:'#ff9800', strokeWidth:4 },
+      { type:'rect', x:600, y:420, width:160, height:90, rotation:22, stroke:'#4a148c', fill:'#f3e5f5', strokeWidth:3 }
+    ]
+  }, null, 2);
+
+  // load sample on start
+  jsonIn.value = sampleJSON;
+  // initial render
+  renderFromText();
+
+  // allow dropping a .json file onto textarea
+  jsonIn.addEventListener('dragover', e=>{ e.preventDefault(); });
+  jsonIn.addEventListener('drop', e=>{
+    e.preventDefault();
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ()=>{ jsonIn.value = reader.result; renderFromText(); };
+    reader.readAsText(f);
+  });
+
+})();
+</script>
+</body>
+</html>
