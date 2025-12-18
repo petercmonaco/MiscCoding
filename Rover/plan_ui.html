@@ -166,13 +166,17 @@
     drawRover(item, '#03740b');
   }
 
-  function transformShapeForBottomLeft(s, coordHeight){
+  function transformShapeForCanvas(s, height, scale){
     if(!s) return s;
     // shallow clone so we don't mutate original JSON
     const t = Object.assign({}, s);
-    if(Object.prototype.hasOwnProperty.call(t, 'y')) t.y = (coordHeight) - (t.y || 0);
-    if(Object.prototype.hasOwnProperty.call(t, 'y1')) t.y1 = (coordHeight) - (t.y1 || 0);
-    if(Object.prototype.hasOwnProperty.call(t, 'y2')) t.y2 = (coordHeight) - (t.y2 || 0);
+    if(Object.prototype.hasOwnProperty.call(t, 'y')) t.y = scale * (height - (t.y || 0));
+    if(Object.prototype.hasOwnProperty.call(t, 'y1')) t.y1 = scale * (height - (t.y1 || 0));
+    if(Object.prototype.hasOwnProperty.call(t, 'y2')) t.y2 = scale * (height - (t.y2 || 0));
+    if(Object.prototype.hasOwnProperty.call(t, 'x')) t.x = scale * (t.x || 0);
+    if(Object.prototype.hasOwnProperty.call(t, 'x1')) t.x1 = scale * (t.x1 || 0);
+    if(Object.prototype.hasOwnProperty.call(t, 'x2')) t.x2 = scale * (t.x2 || 0);
+    if(Object.prototype.hasOwnProperty.call(t, 'r')) t.r = scale * (t.r || 0);
     return t;
   }
 
@@ -186,8 +190,7 @@
     // optional background
     if(obj.background){ ctx.save(); ctx.fillStyle = obj.background; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore(); }
     const shapes = obj.shapes || [];
-    const coordHeight = height * scale;
-    const drawShapes = shapes.map(s => transformShapeForBottomLeft(s, coordHeight));
+    const drawShapes = shapes.map(s => transformShapeForCanvas(s, height, scale));
     for(const s of drawShapes){
       try{
         switch(s.type){

@@ -9,13 +9,6 @@ class Point:
     def relative_point(self, angle, distance):
         """
         Calculate a point relative to self at a certain angle and distance.
-
-        Parameters:
-        angle (float): Heading in degrees.
-        distance (float): Distance from the starting point.
-
-        Returns:
-        Point: New point at the specified angle and distance.
         """
         rad = math.radians(angle)
         new_x = self.x + distance * math.sin(rad)
@@ -59,12 +52,12 @@ def find_tangent(c1, c2):
         angle_offset = math.acos((c1.r - c2.r) / d)
 
         if (c1.dir == 'L'):
-            delta = angle_between_centers - angle_offset
+            abs_angle = angle_between_centers - angle_offset
         else:
-            delta = angle_between_centers + angle_offset
+            abs_angle = angle_between_centers + angle_offset
 
-        tan_start = Point(c1.x + c1.r * math.cos(delta), c1.y + c1.r * math.sin(delta))
-        tan_end = Point(c2.x + c2.r * math.cos(delta), c2.y + c2.r * math.sin(delta))
+        tan_start = Point(c1.x + c1.r * math.cos(abs_angle), c1.y + c1.r * math.sin(abs_angle))
+        tan_end = Point(c2.x + c2.r * math.cos(abs_angle), c2.y + c2.r * math.sin(abs_angle))
 
         return (tan_start, tan_end)
     else:
@@ -121,4 +114,4 @@ def plan_route(arena_width, area_height, x1, y1, hdg1, x2, y2, hdg2, min_radius)
     return json.dumps(plan)
 
 # Example
-print(plan_route(700, 500, 100, 120, 22, 490, 290, 90, 80))
+print(plan_route(700, 500, 100, 120, 22, 490, 290, 135, 80))
