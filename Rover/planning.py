@@ -40,28 +40,39 @@ def find_tangent(c1, c2):
     Returns:
     tuple: Tangent points on both circles.
     """
+    dx = c2.x - c1.x
+    dy = c2.y - c1.y
+    d = math.hypot(dx, dy)
+
+    if d < abs(c1.r - c2.r):
+        raise ValueError("Circles are too close or one is contained within the other.")
+    angle_between_centers = math.atan2(dy, dx)
+
     if (c1.dir == c2.dir):
-        dx = c2.x - c1.x
-        dy = c2.y - c1.y
-        d = math.hypot(dx, dy)
 
-        if d < abs(c1.r - c2.r):
-            raise ValueError("Circles are too close or one is contained within the other.")
-
-        angle_between_centers = math.atan2(dy, dx)
         angle_offset = math.acos((c1.r - c2.r) / d)
 
         if (c1.dir == 'L'):
-            abs_angle = angle_between_centers - angle_offset
-        else:
-            abs_angle = angle_between_centers + angle_offset
+            angle_offset = -angle_offset
+        abs_angle = angle_between_centers + angle_offset
 
         tan_start = Point(c1.x + c1.r * math.cos(abs_angle), c1.y + c1.r * math.sin(abs_angle))
         tan_end = Point(c2.x + c2.r * math.cos(abs_angle), c2.y + c2.r * math.sin(abs_angle))
 
         return (tan_start, tan_end)
     else:
-        return None
+
+        angle_offset = math.acos((c1.r + c2.r) / d)
+        if (c1.dir == 'L'):
+            angle_offset = -angle_offset
+
+        abs_start_angle = angle_between_centers + angle_offset
+        abs_end_angle = angle_between_centers + math.pi + angle_offset
+
+        tan_start = Point(c1.x + c1.r * math.cos(abs_start_angle), c1.y + c1.r * math.sin(abs_start_angle))
+        tan_end = Point(c2.x + c2.r * math.cos(abs_end_angle), c2.y + c2.r * math.sin(abs_end_angle))
+
+        return (tan_start, tan_end)
 
 def plan_route(arena_width, area_height, x1, y1, hdg1, x2, y2, hdg2, min_radius):
     """
@@ -93,8 +104,10 @@ def plan_route(arena_width, area_height, x1, y1, hdg1, x2, y2, hdg2, min_radius)
     end_left_circle = Circle(end_point.relative_point(hdg2 - 90, r), r, "L")
     end_right_circle = Circle(end_point.relative_point(hdg2 + 90, r), r, "R")
 
-    (p1,p2) = find_tangent(start_left_circle, end_left_circle)
-    (p3,p4) = find_tangent(start_right_circle, end_right_circle)
+    (p1,p2) = find_tangent(start_left_circle, end_right_circle)
+    (p3,p4) = find_tangent(start_right_circle, end_left_circle)
+    (p5,p6) = find_tangent(start_left_circle, end_left_circle)
+    (p7,p8) = find_tangent(start_right_circle, end_right_circle)
 
     plan = {
         "width": float(arena_width), 
@@ -107,7 +120,9 @@ def plan_route(arena_width, area_height, x1, y1, hdg1, x2, y2, hdg2, min_radius)
             end_left_circle.to_dict(),
             end_right_circle.to_dict(),
             {"type": "line", "x1": p1.x, "y1": p1.y, "x2": p2.x, "y2": p2.y},
-            {"type": "line", "x1": p3.x, "y1": p3.y, "x2": p4.x, "y2": p4.y}
+            {"type": "line", "x1": p3.x, "y1": p3.y, "x2": p4.x, "y2": p4.y},
+            {"type": "line", "x1": p5.x, "y1": p5.y, "x2": p6.x, "y2": p6.y},
+            {"type": "line", "x1": p7.x, "y1": p7.y, "x2": p8.x, "y2": p8.y}
         ]
     }
 
