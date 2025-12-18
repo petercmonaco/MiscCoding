@@ -166,6 +166,29 @@
     drawRover(item, '#03740b');
   }
 
+  function drawTurnCircle(item){
+    // same as drawCircle but with dashed stroke
+    const {x=0,y=0,r=10,dir='L'} = item;
+    ctx.beginPath();
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 1;
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.strokeStyle = '#000';
+    ctx.stroke();
+    ctx.setLineDash([]); // reset dash
+  }
+
+  function drawTangent(item){
+    const {x1=0,y1=0,x2=0,y2=0} = item;
+    ctx.beginPath();
+    ctx.setLineDash([5, 5]);
+    ctx.lineWidth = 1;
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.strokeStyle = '#000';
+    ctx.stroke();
+  }
+
   function transformShapeForCanvas(s, height, scale){
     if(!s) return s;
     // shallow clone so we don't mutate original JSON
@@ -191,7 +214,7 @@
     clear();
     // optional background
     if(obj.background){ ctx.save(); ctx.fillStyle = obj.background; ctx.fillRect(0,0,canvas.width,canvas.height); ctx.restore(); }
-    const shapes = obj.shapes || [];
+    const shapes = obj.geometry || [];
     const drawShapes = shapes.map(s => transformShapeForCanvas(s, height, scale));
     for(const s of drawShapes){
       try{
@@ -203,6 +226,8 @@
           case 'rect': drawRect(s); break;
           case 'rover_start': drawRoverStart(s); break;
           case 'rover_end': drawRoverEnd(s); break;
+          case 'turn_circle': drawTurnCircle(s); break;
+          case 'tangent': drawTangent(s); break;
           default: console.warn('Unknown shape type', s.type); break;
         }
       }catch(e){ console.error('Error drawing shape', e); }

@@ -25,7 +25,7 @@ class Circle:
 
     def to_dict(self):
         return {
-            "type": "circle",
+            "type": "turn_circle",
             **self.__dict__
         }
 
@@ -112,17 +112,17 @@ def plan_route(arena_width, area_height, x1, y1, hdg1, x2, y2, hdg2, min_radius)
     plan = {
         "width": float(arena_width), 
         "height": float(area_height),
-        "shapes": [
+        "geometry": [
             {"type": "rover_start", "x": x1, "y": y1, "hdg": hdg1},
             {"type": "rover_end", "x": x2, "y": y2, "hdg": hdg2},
             start_left_circle.to_dict(),
             start_right_circle.to_dict(),
             end_left_circle.to_dict(),
             end_right_circle.to_dict(),
-            {"type": "line", "x1": p1.x, "y1": p1.y, "x2": p2.x, "y2": p2.y},
-            {"type": "line", "x1": p3.x, "y1": p3.y, "x2": p4.x, "y2": p4.y},
-            {"type": "line", "x1": p5.x, "y1": p5.y, "x2": p6.x, "y2": p6.y},
-            {"type": "line", "x1": p7.x, "y1": p7.y, "x2": p8.x, "y2": p8.y}
+            {"type": "tangent", "x1": p1.x, "y1": p1.y, "x2": p2.x, "y2": p2.y},
+            {"type": "tangent", "x1": p3.x, "y1": p3.y, "x2": p4.x, "y2": p4.y},
+            {"type": "tangent", "x1": p5.x, "y1": p5.y, "x2": p6.x, "y2": p6.y},
+            {"type": "tangent", "x1": p7.x, "y1": p7.y, "x2": p8.x, "y2": p8.y}
         ]
     }
 
