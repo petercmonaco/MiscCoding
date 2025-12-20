@@ -16,7 +16,6 @@ FONTSCALE = 2
 BACKGROUND_COLOR = 0x80bfff  # Light Blue
 FOREGROUND_COLOR = 0x000000  # Black
 TEXT_COLOR = 0xffffff # White
-is_initialized = False
 
 display = board.DISPLAY
 
@@ -42,35 +41,32 @@ inner_sprite = displayio.TileGrid(
 )
 splash.append(inner_sprite)
 
+text = "Waiting..."
+
+# Draw a label
+ta1 = label.Label(terminalio.FONT, text=f"Cmd: {text}", color=TEXT_COLOR)
+ta1.y = 10
+ta2 = label.Label(terminalio.FONT, text="Bat: 99.9%", color=TEXT_COLOR)
+ta2.y = 20
+ta3 = label.Label(terminalio.FONT, text="Hdg: 45", color=TEXT_COLOR)
+ta3.y = 30
+ta4 = label.Label(terminalio.FONT, text="Ln4:", color=TEXT_COLOR)
+ta4.y = 40
+ta5 = label.Label(terminalio.FONT, text="Ln5:", color=TEXT_COLOR)
+ta5.y = 50
+text_group = displayio.Group(
+    scale=FONTSCALE,
+    x=int(BORDER*1.5),
+    y=10,
+)
+text_group.append(ta1)
+text_group.append(ta2)
+text_group.append(ta3)
+text_group.append(ta4)
+text_group.append(ta5)
+
+splash.append(text_group)
 
 def display_text(text):
-    global is_initialized
-    if is_initialized:
-        splash.pop()
-
-    # Draw a label
-    ta1 = label.Label(terminalio.FONT, text=f"Cmd: {text}", color=TEXT_COLOR)
-    ta1.y = 10
-    ta2 = label.Label(terminalio.FONT, text="Bat: 99.9%", color=TEXT_COLOR)
-    ta2.y = 20
-    ta3 = label.Label(terminalio.FONT, text="Hdg: 45", color=TEXT_COLOR)
-    ta3.y = 30
-    ta4 = label.Label(terminalio.FONT, text="Ln4:", color=TEXT_COLOR)
-    ta4.y = 40
-    ta5 = label.Label(terminalio.FONT, text="Ln5:", color=TEXT_COLOR)
-    ta5.y = 50
-    text_group = displayio.Group(
-        scale=FONTSCALE,
-        x=int(BORDER*1.5),
-        y=10,
-    )
-    text_group.append(ta1)
-    text_group.append(ta2)
-    text_group.append(ta3)
-    text_group.append(ta4)
-    text_group.append(ta5)
-
-    splash.append(text_group)
-
-    is_initialized = True
-    
+    global ta1
+    ta1.text = f"Cmd: {text}"    
