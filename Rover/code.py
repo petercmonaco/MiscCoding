@@ -4,6 +4,7 @@
 
 import os
 import ssl
+from imu import current_heading
 import wifi
 import socketpool
 import adafruit_requests
@@ -82,7 +83,7 @@ def execute_cmd(cmd):
     elif cmd == 'ping':
         websocket.send_message("Pong", fail_silently=True)
     elif cmd == 'status':
-        websocket.send_message(f"Battery: {bm.cell_percent:.1f}%", fail_silently=True)
+        websocket.send_message(f"Battery: {bm.cell_percent:.1f}%\nHeading: {current_heading():.1f}", fail_silently=True)
     else:
         websocket.send_message("Unknown command: " + cmd, fail_silently=True)
 
