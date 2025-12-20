@@ -41,14 +41,16 @@ inner_sprite = displayio.TileGrid(
 )
 splash.append(inner_sprite)
 
-text = "Waiting..."
+text_cmd = "Waiting..."
+text_battery = "??.??%"
+text_heading = "??"
 
 # Draw a label
-ta1 = label.Label(terminalio.FONT, text=f"Cmd: {text}", color=TEXT_COLOR)
+ta1 = label.Label(terminalio.FONT, text=f"Cmd: {text_cmd}", color=TEXT_COLOR)
 ta1.y = 10
-ta2 = label.Label(terminalio.FONT, text="Bat: 99.9%", color=TEXT_COLOR)
+ta2 = label.Label(terminalio.FONT, text=f"Bat: {text_battery}", color=TEXT_COLOR)
 ta2.y = 20
-ta3 = label.Label(terminalio.FONT, text="Hdg: 45", color=TEXT_COLOR)
+ta3 = label.Label(terminalio.FONT, text=f"Hdg: {text_heading}", color=TEXT_COLOR)
 ta3.y = 30
 ta4 = label.Label(terminalio.FONT, text="Ln4:", color=TEXT_COLOR)
 ta4.y = 40
@@ -67,6 +69,20 @@ text_group.append(ta5)
 
 splash.append(text_group)
 
-def display_text(text):
-    global ta1
-    ta1.text = f"Cmd: {text}"    
+def display_cmd(cmd):
+    global ta1, text_cmd
+    if cmd != text_cmd:
+        text_cmd = cmd
+        ta1.text = f"Cmd: {text_cmd}"
+
+def display_battery(b):
+    global ta2, text_battery
+    if b != text_battery:
+        text_battery = b
+        ta2.text = f"Bat: {text_battery}"
+
+def display_heading(h):
+    global ta3, text_heading
+    if h != text_heading:
+        text_heading = h
+        ta3.text = f"Hdg: {text_heading}"

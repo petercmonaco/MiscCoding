@@ -11,7 +11,7 @@ import adafruit_requests
 from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
-from display import display_text
+from display import display_cmd, display_battery, display_heading
 from adafruit_motorkit import MotorKit
 import board
 import alarm
@@ -78,8 +78,6 @@ def execute_cmd(cmd):
         motorkit.motor1.throttle = 0
         motorkit.motor2.throttle = 0
         alarm.exit_and_deep_sleep_until_alarms(alarm.pin.PinAlarm(pin=board.D0, value=False))
-    elif cmd == 'battery':
-        display_text(f"Battery at {bm.cell_percent:.1f}%")
     elif cmd == 'ping':
         websocket.send_message("Pong", fail_silently=True)
     elif cmd == 'status':
@@ -102,17 +100,28 @@ async def handle_websocket_requests():
             if (data := websocket.receive(fail_silently=True)) is not None:
                 print("Received: "+data)
                 # websocket.send_message("Thanks for: " + data, fail_silently=True)
-                display_text(data)
+                display_cmd(data)
                 execute_cmd(data)
 
         await async_sleep(0)
 
+async def update_battery():
+    while True:
+        await async_sleep(15)
+        display_battery(f"{bm.cell_percent:.1f}%")
+
+async def update_heading():
+    while True:
+        await async_sleep(1)
+        display_heading(f"{current_heading():.1f}°")
+
 
 async def main():
-    display_text("Waiting for cmd")
     await gather(
         create_task(handle_http_requests()),
         create_task(handle_websocket_requests()),
+        create_task(update_battery()),
+        create_task(update_heading())
     )
 
 
