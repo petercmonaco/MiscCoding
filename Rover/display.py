@@ -11,11 +11,11 @@ import displayio
 from adafruit_display_text import label
 
 # First set some parameters used for shapes and text
-BORDER = 20
+BORDER = 10
 FONTSCALE = 2
 BACKGROUND_COLOR = 0x80bfff  # Light Blue
-FOREGROUND_COLOR = 0xFFFFFF  # White
-TEXT_COLOR = 0x000000 # Black
+FOREGROUND_COLOR = 0x000000  # Black
+TEXT_COLOR = 0xffffff # White
 is_initialized = False
 
 display = board.DISPLAY
@@ -49,14 +49,27 @@ def display_text(text):
         splash.pop()
 
     # Draw a label
-    text_area = label.Label(terminalio.FONT, text=text, color=TEXT_COLOR)
-    text_width = text_area.bounding_box[2] * FONTSCALE
+    ta1 = label.Label(terminalio.FONT, text=f"Cmd: {text}", color=TEXT_COLOR)
+    ta1.y = 10
+    ta2 = label.Label(terminalio.FONT, text="Bat: 99.9%", color=TEXT_COLOR)
+    ta2.y = 20
+    ta3 = label.Label(terminalio.FONT, text="Hdg: 45", color=TEXT_COLOR)
+    ta3.y = 30
+    ta4 = label.Label(terminalio.FONT, text="Ln4:", color=TEXT_COLOR)
+    ta4.y = 40
+    ta5 = label.Label(terminalio.FONT, text="Ln5:", color=TEXT_COLOR)
+    ta5.y = 50
     text_group = displayio.Group(
         scale=FONTSCALE,
-        x=display.width // 2 - text_width // 2,
-        y=display.height // 2,
+        x=int(BORDER*1.5),
+        y=10,
     )
-    text_group.append(text_area)  # Subgroup for text scaling
+    text_group.append(ta1)
+    text_group.append(ta2)
+    text_group.append(ta3)
+    text_group.append(ta4)
+    text_group.append(ta5)
+
     splash.append(text_group)
 
     is_initialized = True
