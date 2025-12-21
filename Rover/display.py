@@ -44,6 +44,7 @@ splash.append(inner_sprite)
 text_cmd = "Waiting..."
 text_battery = "??.??%"
 text_heading = "??"
+text_distance = "??"
 
 # Draw a label
 ta1 = label.Label(terminalio.FONT, text=f"Cmd: {text_cmd}", color=TEXT_COLOR)
@@ -52,7 +53,7 @@ ta2 = label.Label(terminalio.FONT, text=f"Bat: {text_battery}", color=TEXT_COLOR
 ta2.y = 20
 ta3 = label.Label(terminalio.FONT, text=f"Hdg: {text_heading}", color=TEXT_COLOR)
 ta3.y = 30
-ta4 = label.Label(terminalio.FONT, text="Ln4:", color=TEXT_COLOR)
+ta4 = label.Label(terminalio.FONT, text=f"Dst: {text_distance}mm", color=TEXT_COLOR)
 ta4.y = 40
 ta5 = label.Label(terminalio.FONT, text="Ln5:", color=TEXT_COLOR)
 ta5.y = 50
@@ -86,3 +87,9 @@ def display_heading(h):
     if h != text_heading:
         text_heading = h
         ta3.text = f"Hdg: {text_heading}"
+
+def display_distance(d):
+    global ta4, text_distance
+    if d != text_distance:
+        text_distance = d
+        ta4.text = f"Dst: {text_distance}"
