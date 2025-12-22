@@ -1,4 +1,7 @@
+from asyncio import sleep as async_sleep
 from adafruit_motorkit import MotorKit
+from display import display_heading
+from imu import current_heading
 
 # Motor Stuff
 motorkit = MotorKit() # Implicit args: address=0x60, i2c=board.I2C()
@@ -7,23 +10,55 @@ def _set_throttles(thr1, thr2):
     motorkit.motor1.throttle = thr1
     motorkit.motor2.throttle = thr2
 
+WHEEL_SEP = 98 # mm
+
+stop_condition = None
+
 def handle_driving_cmd(cmd):
-    if cmd.split()[0] not in ['drive', 'stop', 'rotate', 'arc']:
+    global stop_condition
+    cmd_words = cmd.split()
+    if cmd_words[0] not in ['drive', 'stop', 'rotate', 'arc']:
         return (False, 'Not for me')
     if cmd == 'stop':
         _set_throttles(0, 0)
         return (True, None)
-    elif cmd == 'drive':
+    if cmd == 'drive':
         _set_throttles(1, 1)
         return (True, None)
-    elif cmd == 'rotate left':
+    if cmd == 'rotate left':
         _set_throttles(-1, 1)
         return (True, None)
-    elif cmd == 'rotate right':
+    if cmd == 'rotate right':
         _set_throttles(1, -1)
         return (True, None)
+    if cmd_words[0] == 'arc':
+        try:
+            arc_dir = cmd_words[1]
+            arc_radius = int(cmd_words[2])
+            arc_stop_at_hdg = int(cmd_words[3])
+            inner_wheel_speed = (arc_radius - (WHEEL_SEP / 2)) / (arc_radius + (WHEEL_SEP / 2))
+            if arc_dir == 'left':
+                _set_throttles(inner_wheel_speed, 1)
+            elif arc_dir == 'right':
+                _set_throttles(1, inner_wheel_speed)
+            else:
+                return (True, 'Invalid arc direction')
+            stop_condition = arc_stop_at_hdg
+            return (True, None)
+        except ValueError:
+            return (True, 'Malformed arc cmd')
     else:
         return (True, 'Malformed driving command')
 
 def driving_stop():
     _set_throttles(0, 0)
+
+
+async def handle_driving():
+    global stop_condition
+    while True:
+        await async_sleep(0.1)
+        if stop_condition is not None:
+            if current_heading() >= stop_condition:
+                driving_stop()
+                stop_condition = None

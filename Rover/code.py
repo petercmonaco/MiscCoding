@@ -4,7 +4,7 @@
 
 import os
 import ssl
-from driving import driving_stop, handle_driving_cmd
+from driving import driving_stop, handle_driving_cmd, handle_driving
 from imu import current_heading
 from lidar import get_distance
 import wifi
@@ -116,7 +116,8 @@ async def main():
         create_task(handle_websocket_requests()),
         create_task(update_battery()),
         create_task(update_heading()),
-        create_task(update_distance())
+        create_task(update_distance()),
+        create_task(handle_driving())
     )
 
 
