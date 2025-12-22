@@ -4,6 +4,7 @@
 
 import os
 import ssl
+from driving import driving_stop, handle_driving_cmd
 from imu import current_heading
 from lidar import get_distance
 import wifi
@@ -13,7 +14,6 @@ from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
 from display import display_cmd, display_battery, display_distance, display_heading
-from adafruit_motorkit import MotorKit
 import board
 import alarm
 import adafruit_max1704x
@@ -56,37 +56,25 @@ def connect_client(request: Request):
 
 server.start(str(wifi.radio.ipv4_address))
 
-# Motor Stuff
-motorkit = MotorKit() # Implicit args: address=0x60, i2c=board.I2C()
-
 # Battery monitor
 bm = adafruit_max1704x.MAX17048(board.I2C())
 
 def execute_cmd(cmd):
-    if cmd == 'stop':
-        motorkit.motor1.throttle = 0
-        motorkit.motor2.throttle = 0
-    elif cmd == 'drive':
-        motorkit.motor1.throttle = 1
-        motorkit.motor2.throttle = 1
-    elif cmd == 'rotate left':
-        motorkit.motor1.throttle = -1
-        motorkit.motor2.throttle = 1
-    elif cmd == 'rotate right':
-        motorkit.motor1.throttle = 1
-        motorkit.motor2.throttle = -1
-    elif cmd == 'sleep':
-        motorkit.motor1.throttle = 0
-        motorkit.motor2.throttle = 0
+    if cmd == 'sleep':
+        driving_stop()
         alarm.exit_and_deep_sleep_until_alarms(alarm.pin.PinAlarm(pin=board.D0, value=False))
     elif cmd == 'ping':
         websocket.send_message("Pong", fail_silently=True)
     elif cmd == 'status':
         websocket.send_message(f"Battery: {bm.cell_percent:.1f}%\nHeading: {current_heading():.1f}", fail_silently=True)
     else:
-        websocket.send_message("Unknown command: " + cmd, fail_silently=True)
-
-
+        (is_for_me, msg) = handle_driving_cmd(cmd)
+        if is_for_me:
+            if msg:
+                websocket.send_message(msg, fail_silently=True)
+            return
+    
+    websocket.send_message("Unknown command: " + cmd, fail_silently=True)
 
 async def handle_http_requests():
     while True:
