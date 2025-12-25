@@ -95,9 +95,10 @@ async def handle_websocket_requests():
         await async_sleep(0)
 
 async def update_battery():
+    await async_sleep(3) # Wait for battery data to init
     while True:
-        await async_sleep(15)
         display_battery(f"{bm.cell_percent:.1f}%")
+        await async_sleep(15)
 
 async def update_heading():
     while True:

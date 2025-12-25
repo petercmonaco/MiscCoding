@@ -1,7 +1,7 @@
 from asyncio import sleep as async_sleep
 from adafruit_motorkit import MotorKit
-from display import display_heading
 from imu import current_heading
+from utils import HeadingStopper
 
 # Motor Stuff
 motorkit = MotorKit() # Implicit args: address=0x60, i2c=board.I2C()
@@ -9,6 +9,7 @@ motorkit = MotorKit() # Implicit args: address=0x60, i2c=board.I2C()
 def _set_throttles(thr1, thr2):
     motorkit.motor1.throttle = thr1
     motorkit.motor2.throttle = thr2
+    return (True, None) # Success; returning this tuple is helpful for next layer up
 
 WHEEL_SEP = 98 # mm
 
@@ -20,17 +21,13 @@ def handle_driving_cmd(cmd):
     if cmd_words[0] not in ['drive', 'stop', 'rotate', 'arc']:
         return (False, 'Not for me')
     if cmd == 'stop':
-        _set_throttles(0, 0)
-        return (True, None)
+        return _set_throttles(0, 0)
     if cmd == 'drive':
-        _set_throttles(1, 1)
-        return (True, None)
+        return _set_throttles(1, 1)
     if cmd == 'rotate left':
-        _set_throttles(-1, 1)
-        return (True, None)
+        return _set_throttles(-1, 1)
     if cmd == 'rotate right':
-        _set_throttles(1, -1)
-        return (True, None)
+        return _set_throttles(1, -1)
     if cmd_words[0] == 'arc':
         try:
             arc_dir = cmd_words[1]
@@ -43,7 +40,7 @@ def handle_driving_cmd(cmd):
                 _set_throttles(1, inner_wheel_speed)
             else:
                 return (True, 'Invalid arc direction')
-            stop_condition = arc_stop_at_hdg
+            stop_condition = HeadingStopper(current_heading(), arc_dir, arc_stop_at_hdg)
             return (True, None)
         except ValueError:
             return (True, 'Malformed arc cmd')
@@ -57,8 +54,8 @@ def driving_stop():
 async def handle_driving():
     global stop_condition
     while True:
-        await async_sleep(0.1)
+        await async_sleep(0.01)
         if stop_condition is not None:
-            if current_heading() >= stop_condition:
+            if stop_condition.should_stop(current_heading()):
                 driving_stop()
                 stop_condition = None
