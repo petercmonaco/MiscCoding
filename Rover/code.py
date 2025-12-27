@@ -6,14 +6,14 @@ import os
 import ssl
 from driving import driving_stop, handle_driving_cmd, handle_driving
 from imu import current_heading
-from lidar import get_distance
+from lidar import get_distances
 import wifi
 import socketpool
 import adafruit_requests
 from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
-from display import display_cmd, display_battery, display_distance, display_heading
+from display import display_cmd, display_battery, display_distances, display_heading
 import board
 import alarm
 import adafruit_max1704x
@@ -108,7 +108,7 @@ async def update_heading():
 async def update_distance():
     while True:
         await async_sleep(1)
-        display_distance(f"{get_distance():.0f}mm")
+        display_distances(*get_distances())
 
 
 async def main():
@@ -118,7 +118,8 @@ async def main():
         create_task(update_battery()),
         create_task(update_heading()),
         create_task(update_distance()),
-        create_task(handle_driving())
+        create_task(handle_driving()),
+        ##create_task(do_ranging()),
     )
 
 
