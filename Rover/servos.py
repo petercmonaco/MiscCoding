@@ -1,6 +1,6 @@
 from asyncio import sleep as async_sleep
 from adafruit_servokit import ServoKit
-from imu import current_heading
+from imu import current_heading, is_parked_flat
 kit = ServoKit(channels=8)
 
 kit.servo[0].set_pulse_width_range(450, 2550)
@@ -58,7 +58,7 @@ def point_lidar_to_calibrated_heading(h):
 async def do_point_lidar():
     global pause_tracking
     while True:
-        if not pause_tracking:
+        if not pause_tracking and not is_parked_flat():
             h = current_heading()
             point_lidar_to_calibrated_heading(360-h)
         await async_sleep(0.1)

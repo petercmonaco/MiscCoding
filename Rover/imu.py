@@ -21,3 +21,7 @@ def current_heading():
     if hdg < 0:
         hdg += 360
     return hdg
+
+def is_parked_flat():
+    x, y, z = accel_gyro.acceleration
+    return abs(z) > abs(x) and abs(z) > abs(y)
