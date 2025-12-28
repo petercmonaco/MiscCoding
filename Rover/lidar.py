@@ -47,21 +47,6 @@ for s in sensors:
     # Optional: Retrieve the sensor's model ID, module type, and mask revision
     #model_id, module_type, mask_rev = s.model_info
 
-latest_distance = None
-
-"""async def do_ranging():
-    while True:
-        d1 = "??"
-        d2 = "??"
-        if sensors[0].data_ready:
-            d1 = (sensors[0].distance or 0) * 10 # Convert cm to mm
-            sensors[0].clear_interrupt()
-        if sensors[1].data_ready:
-            d2 = (sensors[1].distance or 0) * 10 # Convert cm to mm
-            sensors[1].clear_interrupt()
-        print(f"Lidar distances: Sensor 1: {d1} mm, Sensor 2: {d2} mm")
-        await async_sleep(1)"""
-
 last_dist = [None, None]
 def get_distances():
     global last_dist, sensors

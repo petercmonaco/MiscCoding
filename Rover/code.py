@@ -14,6 +14,7 @@ from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
 from display import display_cmd, display_battery, display_distances, display_heading
+from servos import do_point_lidar, handle_servo_cmd
 import board
 import alarm
 import adafruit_max1704x
@@ -68,11 +69,12 @@ def execute_cmd(cmd):
     elif cmd == 'status':
         websocket.send_message(f"Battery: {bm.cell_percent:.1f}%\nHeading: {current_heading():.1f}", fail_silently=True)
     else:
-        (is_for_me, msg) = handle_driving_cmd(cmd)
-        if is_for_me:
-            if msg:
-                websocket.send_message(msg, fail_silently=True)
-            return
+        for cmd_handler in [handle_driving_cmd, handle_servo_cmd]:
+            (is_for_me, msg) = cmd_handler(cmd)
+            if is_for_me:
+                if msg:
+                    websocket.send_message(msg, fail_silently=True)
+                return
     
     websocket.send_message("Unknown command: " + cmd, fail_silently=True)
 
@@ -119,7 +121,7 @@ async def main():
         create_task(update_heading()),
         create_task(update_distance()),
         create_task(handle_driving()),
-        ##create_task(do_ranging()),
+        create_task(do_point_lidar()),
     )
 
 
