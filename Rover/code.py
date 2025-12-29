@@ -5,7 +5,7 @@
 import os
 import ssl
 from driving import driving_stop, handle_driving_cmd, handle_driving
-from imu import current_heading
+from imu import current_heading, is_parked_flat
 from lidar import get_distances
 import wifi
 import socketpool
@@ -67,7 +67,16 @@ def execute_cmd(cmd):
     elif cmd == 'ping':
         websocket.send_message("Pong", fail_silently=True)
     elif cmd == 'status':
-        websocket.send_message(f"Battery: {bm.cell_percent:.1f}%\nHeading: {current_heading():.1f}", fail_silently=True)
+        websocket.send_message(f"Battery: {bm.cell_percent:.1f}%", fail_silently=True)
+    elif cmd == 'pos':
+        resp = ""
+        if is_parked_flat():
+            resp += "Parked flat. "
+        else:
+            resp += f"Hdg: {current_heading():.1f}"
+        (d1, d2) = get_distances()
+        resp += f" {d1}mm up, {d2}mm over"
+        websocket.send_message(resp, fail_silently=True)
     else:
         for cmd_handler in [handle_driving_cmd, handle_servo_cmd]:
             (is_for_me, msg) = cmd_handler(cmd)
@@ -75,8 +84,7 @@ def execute_cmd(cmd):
                 if msg:
                     websocket.send_message(msg, fail_silently=True)
                 return
-    
-    websocket.send_message("Unknown command: " + cmd, fail_silently=True)
+        websocket.send_message("Unknown command: " + cmd, fail_silently=True)
 
 async def handle_http_requests():
     while True:
