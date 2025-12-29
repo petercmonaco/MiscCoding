@@ -4,32 +4,60 @@
     <meta charset="UTF-8">
     <title>Whiteboard Rover</title>
     <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 20px auto; }
+        body { font-family: sans-serif; max-width: 1200px; margin: 20px auto; }
         #log { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; margin-bottom: 10px; }
         #messageInput { width: calc(100% - 70px); padding: 8px; }
         #sendButton { width: 60px; padding: 8px; }
         .sent { color: blue; }
         .received { color: green; }
         .status { color: gray; font-size: 0.8em; }
+        .container { display: flex;}
+        .div-one, .div-two { flex: 1; padding: 10px;}
+        table { border: 1px solid gray; border-collapse: collapse; }
+        th, td { padding-top: 0px; padding-bottom: 0px; padding-left: 10px; padding-right: 10px; }
+        .div-one { margin-right: 10px; }
     </style>
 </head>
 <body>
-    <h1>Whiteboard Rover Comm Interface</h1>
+    <h1>Whiteboard Rover</h1>
+    <div class="container">
+        <div class="div-one">
+            <h2>Command Interface</h2>
+            <div>
+                <label for="wsUrl">WebSocket URL:</label>
+                <input type="text" id="wsUrl" value="ws://IPADDR:5000/connect-websocket" size="40">
+                <button id="connectButton">Connect</button>
+                <button id="disconnectButton" disabled>Disconnect</button>
+            </div>
+            <p class="status">Status: <span id="connectionStatus">Closed</span></p>
 
-    <div>
-        <label for="wsUrl">WebSocket URL:</label>
-        <input type="text" id="wsUrl" value="ws://IPADDR:5000/connect-websocket" size="40">
-        <button id="connectButton">Connect</button>
-        <button id="disconnectButton" disabled>Disconnect</button>
+            <div id="log"></div>
+
+            <form id="messageForm">
+                <input type="text" id="messageInput" placeholder="Type a message...">
+                <button type="submit" id="sendButton" disabled>Send</button>
+            </form>
+        </div>
+        <div class="div-two">
+            <h2>Sample Commands</h2>
+            <h4>Driving Commands</h4>
+            <table border="1">
+                <tr><td>stop<td>Stop all motors; clear navigation plan</tr>
+                <tr><td>drive<td>Drive forward, forever</tr>
+                <tr><td>rotate left/right<td>forever</tr>
+                <tr><td>arc left/right #rad #hdg<td>Drive in an arc, to left or right, with given radius, until reaching given heading</tr>
+            </table>
+            <h4>Debug and Operations Commands</h4>
+            <table border="1">
+                <tr><td>sleep<td>Put the rover to sleep; wake up with the reset button</tr>
+                <tr><td>ping<td>Request a response, to verify connection</tr>
+                <tr><td>status<td>Request battery level and other info</tr>
+                <tr><td>servo 0 90<td>Set servo 0 to 90 degrees</tr>
+                <tr><td>servo 0 track<td>Return servo 0 to vertical-tracking mode</tr>
+            </table>
+
+        </div>
     </div>
-    <p class="status">Status: <span id="connectionStatus">Closed</span></p>
-
-    <div id="log"></div>
-
-    <form id="messageForm">
-        <input type="text" id="messageInput" placeholder="Type a message...">
-        <button type="submit" id="sendButton" disabled>Send</button>
-    </form>
 
     <script>
         const log = document.getElementById('log');
