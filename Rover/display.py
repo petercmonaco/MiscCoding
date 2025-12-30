@@ -45,6 +45,7 @@ text_cmd = "Waiting..."
 text_battery = "??.??%"
 text_heading = "??"
 text_distance = "??"
+last_xy_text = "??"
 
 # Draw a label
 ta1 = label.Label(terminalio.FONT, text=f"Cmd: {text_cmd}", color=TEXT_COLOR)
@@ -55,7 +56,7 @@ ta3 = label.Label(terminalio.FONT, text=f"Hdg: {text_heading}", color=TEXT_COLOR
 ta3.y = 30
 ta4 = label.Label(terminalio.FONT, text=f"Dst: {text_distance}mm", color=TEXT_COLOR)
 ta4.y = 40
-ta5 = label.Label(terminalio.FONT, text="Ln5:", color=TEXT_COLOR)
+ta5 = label.Label(terminalio.FONT, text="XY:", color=TEXT_COLOR)
 ta5.y = 50
 text_group = displayio.Group(
     scale=FONTSCALE,
@@ -94,3 +95,10 @@ def display_distances(d):
     if new_text != text_distance:
         text_distance = new_text
         ta4.text = new_text
+
+def display_xy(d):
+    global ta5, last_xy_text
+    new_text = f"X/Y: {d[0]}, {d[1]}"
+    if new_text != last_xy_text:
+        last_xy_text = new_text
+        ta5.text = new_text

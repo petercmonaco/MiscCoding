@@ -90,9 +90,14 @@ def handle_driving_cmd(cmd):
     else:
         return (True, 'Malformed driving command')
 
+def upover_to_xy(up_mm, over_mm):
+    x = 1160 - over_mm  # mm
+    y = 1060 - up_mm    # mm
+    return (x, y)
+
 def _current_xy():
     [dst_up, dist_over] = get_distances()
-    x = 1040 - dist_over  # mm
+    x = 1160 - dist_over  # mm
     y = 1060 - dst_up     # mm
     return (x, y)
 

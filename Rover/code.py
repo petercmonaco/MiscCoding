@@ -4,7 +4,7 @@
 
 import os
 import ssl
-from driving import driving_stop, handle_driving_cmd, handle_driving
+from driving import driving_stop, handle_driving_cmd, handle_driving, upover_to_xy
 from imu import current_heading, is_parked_flat
 from lidar import loop_read_lidar, get_distances
 import wifi
@@ -13,7 +13,7 @@ import adafruit_requests
 from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
-from display import display_cmd, display_battery, display_distances, display_heading
+from display import display_cmd, display_battery, display_distances, display_heading, display_xy
 from servos import loop_point_lidar, handle_servo_cmd
 import board
 import alarm
@@ -121,8 +121,10 @@ async def update_heading():
 async def update_distance():
     while True:
         await async_sleep(1)
+        d = get_distances()
+        xy = upover_to_xy(d[0], d[1])
         display_distances(get_distances())
-
+        display_xy(xy)
 
 async def main():
     await gather(
