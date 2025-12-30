@@ -55,7 +55,7 @@ def point_lidar_to_calibrated_heading(h):
     desired_angle = int((450 - h) * 166/180)
     kit.servo[0].angle = desired_angle
 
-async def do_point_lidar():
+async def loop_point_lidar():
     global pause_tracking
     while True:
         if not pause_tracking and not is_parked_flat():

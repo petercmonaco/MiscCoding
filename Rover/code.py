@@ -6,7 +6,7 @@ import os
 import ssl
 from driving import driving_stop, handle_driving_cmd, handle_driving
 from imu import current_heading, is_parked_flat
-from lidar import get_distances
+from lidar import loop_read_lidar, get_distances
 import wifi
 import socketpool
 import adafruit_requests
@@ -14,7 +14,7 @@ from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from adafruit_httpserver import GET, Request, Response, Server, Websocket
 from display import display_cmd, display_battery, display_distances, display_heading
-from servos import do_point_lidar, handle_servo_cmd
+from servos import loop_point_lidar, handle_servo_cmd
 import board
 import alarm
 import adafruit_max1704x
@@ -69,14 +69,17 @@ def execute_cmd(cmd):
     elif cmd == 'status':
         websocket.send_message(f"Battery: {bm.cell_percent:.1f}%", fail_silently=True)
     elif cmd == 'pos':
-        resp = ""
-        if is_parked_flat():
-            resp += "Parked flat. "
-        else:
-            resp += f"Hdg: {current_heading():.1f}"
-        (d1, d2) = get_distances()
+        resp = "Parked flat. " if is_parked_flat() else f"Hdg: {current_heading():.1f}. "
+        [d1, d2] = get_distances()
         resp += f" {d1}mm up, {d2}mm over"
         websocket.send_message(resp, fail_silently=True)
+    elif cmd == 'collect_lidar':
+        pass
+        #(dvals1, dvals2) = collect_timings()
+        #websocket.send_message(f"Up: Collected {len(dvals1)} distance readings", fail_silently=True)
+        #websocket.send_message(",".join([str(d) for d in dvals1]), fail_silently=True)
+        #websocket.send_message(f"Over: Collected {len(dvals2)} distance readings", fail_silently=True)
+        #websocket.send_message(",".join([str(d) for d in dvals2]), fail_silently=True)
     else:
         for cmd_handler in [handle_driving_cmd, handle_servo_cmd]:
             (is_for_me, msg) = cmd_handler(cmd)
@@ -118,7 +121,7 @@ async def update_heading():
 async def update_distance():
     while True:
         await async_sleep(1)
-        display_distances(*get_distances())
+        display_distances(get_distances())
 
 
 async def main():
@@ -129,7 +132,8 @@ async def main():
         create_task(update_heading()),
         create_task(update_distance()),
         create_task(handle_driving()),
-        create_task(do_point_lidar()),
+        create_task(loop_point_lidar()),
+        create_task(loop_read_lidar()),
     )
 
 

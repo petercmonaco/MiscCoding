@@ -1,3 +1,4 @@
+import time
 import board
 import adafruit_vl53l1x
 import digitalio
@@ -47,12 +48,38 @@ for s in sensors:
     # Optional: Retrieve the sensor's model ID, module type, and mask revision
     #model_id, module_type, mask_rev = s.model_info
 
-last_dist = [None, None]
-def get_distances():
-    global last_dist, sensors
-    for i, sensor in enumerate(sensors):
-        if sensor.data_ready:
-            last_dist[i] = (sensor.distance or 0) * 10 # Convert cm to mm
-            sensor.clear_interrupt()
+last_dist = [None] * len(sensors)
 
+"""def collect_timings():
+    global sensors
+    dvals1 = []
+    dvals2 = []
+    start_time = time.monotonic()
+    while True:
+        if sensors[0].data_ready :
+            dvals1.append(sensors[0].distance)
+            sensors[0].clear_interrupt()
+        if sensors[1].data_ready :
+            dvals2.append(sensors[1].distance)
+            sensors[1].clear_interrupt()
+        time.sleep(0.001)
+        if time.monotonic() - start_time > 5.0:
+            break
+
+    return (dvals1, dvals2)"""
+
+async def loop_read_lidar():
+    global sensors, last_dist
+    while True:
+        for i, s in enumerate(sensors): 
+            if s.data_ready :
+                d = s.distance
+                if d is not None: # Sometime it's not really ready
+                    last_dist[i] = int(d * 10)  # convert to mm
+                s.clear_interrupt()
+        await async_sleep(0.02) # 20 ms between readings
+
+
+def get_distances():
+    global last_dist
     return last_dist

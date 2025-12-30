@@ -88,9 +88,9 @@ def display_heading(h):
         text_heading = h
         ta3.text = f"Hdg: {text_heading}"
 
-def display_distances(d1, d2):
+def display_distances(d):
     global ta4, text_distance
-    new_text = f"dUp: {d1:0.0f}mm dRt: {d2:0.0f}mm"
+    new_text = f"Dst: {d[0]}mm, {d[1]}mm"
     if new_text != text_distance:
         text_distance = new_text
         ta4.text = new_text
