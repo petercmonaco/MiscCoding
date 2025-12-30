@@ -7,10 +7,6 @@ from asyncio import sleep as async_sleep
 #i2c = board.I2C()  # uses board.SCL and board.SDA
 i2c_stemma = board.STEMMA_I2C()  # For using the built-in STEMMA QT connector on a microcontroller
 
-if i2c_stemma.try_lock():
-    print("Pre-scan: Sensor I2C addresses:", [hex(x) for x in i2c_stemma.scan()])
-    i2c_stemma.unlock()
-
 xshut = [
     digitalio.DigitalInOut(board.D6),
     digitalio.DigitalInOut(board.D5),
@@ -37,9 +33,9 @@ for pin_number, shutdown_pin in enumerate(xshut):
         sensor.set_address(pin_number + 0x30)
 
 # Print the various sensor I2C addresses to the serial console.
-if i2c_stemma.try_lock():
-    print("Sensor I2C addresses:", [hex(x) for x in i2c_stemma.scan()])
-    i2c_stemma.unlock()
+#if i2c_stemma.try_lock():
+#    print("Sensor I2C addresses:", [hex(x) for x in i2c_stemma.scan()])
+#    i2c_stemma.unlock()
 
 for s in sensors:
     s.distance_mode = 2 # 1: SHORT, 2: LONG

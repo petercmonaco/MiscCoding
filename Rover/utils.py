@@ -15,7 +15,6 @@ class HeadingStopper:
         else:
             self.breakpoint = midpoint
         self.target_hdg = self._normalize(target_hdg)
-        print(f"HeadingStopper: curr={curr_hdg} dir={dir}, target_hdg={self.target_hdg}, breakpoint={self.breakpoint}")
 
     def _normalize(self, h):
         return h-360 if h > self.breakpoint else h

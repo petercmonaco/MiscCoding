@@ -51,8 +51,6 @@ def driving_stop():
 
 def _enqueue_action(left_thr, right_thr, stop_condition):
     global action_queue
-    print(f"in _enqueue, existing list is: {action_queue}")
-    print(f"Enqueueing action: left={left_thr}, right={right_thr}, stop_condition={stop_condition}")
     action_queue.append( (left_thr, right_thr, stop_condition) )
     if len(action_queue) == 1:
         # If this is the only action, start it right away
