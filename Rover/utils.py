@@ -20,7 +20,7 @@ class HeadingStopper:
     def _normalize(self, h):
         return h-360 if h > self.breakpoint else h
     
-    def should_stop(self, curr_hdg):
+    def should_stop(self, curr_x, curr_y, curr_hdg):
         if (self.dir == 'left'):
             return self._normalize(curr_hdg) <= self.target_hdg
         else:
