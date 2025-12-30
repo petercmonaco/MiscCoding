@@ -73,9 +73,9 @@ async def loop_read_lidar():
     while True:
         for i, s in enumerate(sensors): 
             if s.data_ready :
-                d = s.distance
-                if d is not None: # Sometime it's not really ready
-                    last_dist[i] = int(d * 10)  # convert to mm
+                reading = s.distance
+                d = reading if reading is not None else 555.5 # If the distance is too great, sensor returns None
+                last_dist[i] = int(d * 10)  # convert to mm
                 s.clear_interrupt()
         await async_sleep(0.02) # 20 ms between readings
 

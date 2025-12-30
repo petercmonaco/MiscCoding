@@ -9,22 +9,22 @@ motorkit = MotorKit() # Implicit args: address=0x60, i2c=board.I2C()
 
 class XStopper:
     def __init__(self, curr_x, target_x):
-        self.dir = "Up" if target_x > curr_x else "Down"
+        self.dir = "Left" if target_x > curr_x else "Right"
         self.target_x = target_x
 
     def should_stop(self, curr_x, curr_y, curr_hdg):
-        if (self.dir == 'Up'):
+        if (self.dir == 'Left'):
             return curr_x >= self.target_x
         else:
             return curr_x <= self.target_x
 
 class YStopper:
     def __init__(self, curr_y, target_y):
-        self.dir = "Right" if target_y > curr_y else "Left"
+        self.dir = "Up" if target_y > curr_y else "Down"
         self.target_y = target_y
 
     def should_stop(self, curr_x, curr_y, curr_hdg):
-        if (self.dir == 'Right'):
+        if (self.dir == 'Up'):
             return curr_y >= self.target_y
         else:
             return curr_y <= self.target_y
