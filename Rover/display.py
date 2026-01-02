@@ -1,10 +1,3 @@
-# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
-# SPDX-License-Identifier: MIT
-
-"""
-This test will initialize the display using displayio and draw a solid green
-background, a smaller purple rectangle, and some yellow text.
-"""
 import board
 import terminalio
 import displayio
@@ -41,64 +34,54 @@ inner_sprite = displayio.TileGrid(
 )
 splash.append(inner_sprite)
 
-text_cmd = "Waiting..."
-text_battery = "??.??%"
-text_heading = "??"
-text_distance = "??"
-last_xy_text = "??"
+last_text = [
+    "Cmd: Waiting...",
+    "Bat: ??.??%",
+    "Hdg: ??",
+    "Dst: ??",
+    "X/Y: ??"
+]
 
-# Draw a label
-ta1 = label.Label(terminalio.FONT, text=f"Cmd: {text_cmd}", color=TEXT_COLOR)
-ta1.y = 10
-ta2 = label.Label(terminalio.FONT, text=f"Bat: {text_battery}", color=TEXT_COLOR)
-ta2.y = 20
-ta3 = label.Label(terminalio.FONT, text=f"Hdg: {text_heading}", color=TEXT_COLOR)
-ta3.y = 30
-ta4 = label.Label(terminalio.FONT, text=f"Dst: {text_distance}mm", color=TEXT_COLOR)
-ta4.y = 40
-ta5 = label.Label(terminalio.FONT, text="XY:", color=TEXT_COLOR)
-ta5.y = 50
+text_areas = [None] * len(last_text)
+label_y = 10
+for i, t in enumerate(last_text):
+    text_areas[i] = label.Label(terminalio.FONT, text=last_text[i], color=TEXT_COLOR)
+    text_areas[i].y = label_y
+    label_y += 10
+
 text_group = displayio.Group(
     scale=FONTSCALE,
     x=int(BORDER*1.5),
     y=10,
 )
-text_group.append(ta1)
-text_group.append(ta2)
-text_group.append(ta3)
-text_group.append(ta4)
-text_group.append(ta5)
+for ta in text_areas:
+    text_group.append(ta)
 
 splash.append(text_group)
 
+def _update_line_text(i, new_text):
+    global text_areas, last_text
+    if last_text[i] != new_text:
+        last_text[i] = new_text
+        text_areas[i].text = new_text
+
 def display_cmd(cmd):
-    global ta1, text_cmd
-    if cmd != text_cmd:
-        text_cmd = cmd
-        ta1.text = f"Cmd: {text_cmd}"
+    _update_line_text(0, f"Cmd: {cmd}")
 
 def display_battery(b):
-    global ta2, text_battery
-    if b != text_battery:
-        text_battery = b
-        ta2.text = f"Bat: {text_battery}"
+    _update_line_text(1, f"Bat: {b}%")
 
 def display_heading(h):
-    global ta3, text_heading
-    if h != text_heading:
-        text_heading = h
-        ta3.text = f"Hdg: {text_heading}"
+    _update_line_text(2, f"Hdg: {h}")
 
 def display_distances(d):
-    global ta4, text_distance
-    new_text = f"Dst: {d[0]}mm, {d[1]}mm"
-    if new_text != text_distance:
-        text_distance = new_text
-        ta4.text = new_text
+    if d is not None and len(d) == 2:
+        _update_line_text(3, f"Dst: {d[0]}mm, {d[1]}mm")
+    else:
+        _update_line_text(3, "Dst: None")
 
 def display_xy(d):
-    global ta5, last_xy_text
-    new_text = f"X/Y: {d[0]}, {d[1]}"
-    if new_text != last_xy_text:
-        last_xy_text = new_text
-        ta5.text = new_text
+    if d is not None and len(d) == 2:
+        _update_line_text(4, f"X/Y: {d[0]}, {d[1]}")
+    else:
+        _update_line_text(4, "X/Y: None")
