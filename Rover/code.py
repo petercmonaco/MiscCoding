@@ -4,7 +4,7 @@
 
 import os
 import ssl
-from driving import driving_stop, handle_driving_cmd, handle_driving, upover_to_xy
+from driving import driving_stop, handle_driving_cmd, loop_driving, loop_replan, upover_to_xy
 from imu import current_heading, is_parked_flat
 from lidar import loop_read_lidar, get_distances
 import wifi
@@ -107,35 +107,25 @@ async def handle_websocket_requests():
 
         await async_sleep(0)
 
-async def update_battery():
-    await async_sleep(3) # Wait for battery data to init
-    while True:
-        display_battery(f"{bm.cell_percent:.1f}%")
-        await async_sleep(15)
-
-async def update_heading():
+async def loop_update_display():
     while True:
         await async_sleep(1)
-        display_heading(f"{current_heading():.1f}°")
-
-async def update_distance():
-    while True:
-        await async_sleep(1)
+        display_battery(f"{bm.cell_percent:.1f}")
+        display_heading(f"{current_heading():.1f}")
         d = get_distances()
+        display_distances(d)
         xy = upover_to_xy(d[0], d[1])
-        display_distances(get_distances())
         display_xy(xy)
 
 async def main():
     await gather(
         create_task(handle_http_requests()),
         create_task(handle_websocket_requests()),
-        create_task(update_battery()),
-        create_task(update_heading()),
-        create_task(update_distance()),
-        create_task(handle_driving()),
+        create_task(loop_update_display()),
+        create_task(loop_driving()),
         create_task(loop_point_lidar()),
         create_task(loop_read_lidar()),
+        create_task(loop_replan())
     )
 
 
