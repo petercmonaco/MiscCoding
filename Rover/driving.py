@@ -137,11 +137,11 @@ def _plan_route_to(goal):
                         HeadingStopper(curr_hdg, dir, final_hdg) ) )
         else:
             plan = None # No plan needed; we're already there
-    print("Planned route:")
-    if plan is not None:
-        for t in plan:
-            print("  ", t[0], t[1], t[2])
-    print("------------")
+    #print("Planned route:")
+    #if plan is not None:
+    #    for t in plan:
+    #        print("  ", t[0], t[1], t[2])
+    #print("------------")
     return plan
 
 def _plan_and_start_route():
@@ -151,7 +151,7 @@ def _plan_and_start_route():
         driving_stop()
         action_queue.clear()
         nav_goal = None
-        print("---Navto is complete")
+        #print("---Navto is complete")
     else:
         action_queue = new_plan
         # Start the first action right away

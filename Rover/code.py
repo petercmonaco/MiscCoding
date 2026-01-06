@@ -121,11 +121,11 @@ async def main():
     await gather(
         create_task(handle_http_requests()),
         create_task(handle_websocket_requests()),
-        create_task(loop_update_display()),
-        create_task(loop_driving()),
-        create_task(loop_point_lidar()),
-        create_task(loop_read_lidar()),
-        create_task(loop_replan())
+        create_task(loop_update_display()), # 1x
+        create_task(loop_driving()), # 100x
+        create_task(loop_point_lidar()), # 10x
+        create_task(loop_read_lidar()), # 50x, but new data 10x
+        create_task(loop_replan()) # 1x
     )
 
 
