@@ -101,27 +101,33 @@ def _current_xy():
     y = 1060 - dst_up     # mm
     return (x, y)
 
+def _add_rotation_to_plan_if_needed(plan, hdg1, hdg2):
+    (dir, n_deg) = heading_diff(hdg1, hdg2)
+    if n_deg > 5:
+        plan.append((
+            -1 if dir == 'left' else 1,
+            1 if dir == 'left' else -1,
+            HeadingStopper(hdg1, dir, hdg2)
+        ))
+
 def _plan_route_to(goal):
     plan = []
     (goal_x, goal_y, final_hdg) = goal
     (curr_x, curr_y) = _current_xy()
     curr_hdg = current_heading()
-    print(f"plan ({curr_x}, {curr_y}, {curr_hdg}) to ({goal_x}, {goal_y}, {final_hdg})")
+    #print(f"plan ({curr_x}, {curr_y}, {curr_hdg}) to ({goal_x}, {goal_y}, {final_hdg})")
     dx = goal_x - curr_x
     dy = goal_y - curr_y
-    print(f"  delta: ({dx}, {dy})")
+    #print(f"  delta: ({dx}, {dy})")
     if (dx**2 + dy**2) > 400: # More than 20mm away
         hdg_to_goal = math.degrees(math.atan2(dx, dy)) % 360 # (dx,dy) because 0 deg is Up.
-        print(f"  bearing to goal: {hdg_to_goal}")
+        #print(f"  bearing to goal: {hdg_to_goal}")
         go_backwards = False
         if hdg_to_goal > 90 and hdg_to_goal < 270:
             hdg_to_goal = (hdg_to_goal + 180) % 360
             go_backwards = True
-            print(f"   but go backwards, point to {hdg_to_goal}")
-        (dir, n_deg) = heading_diff(curr_hdg, hdg_to_goal)
-        if n_deg > 5:
-            plan.append( ( -1 if dir == 'left' else 1, 1 if dir == 'left' else -1,
-                          HeadingStopper(curr_hdg, dir, hdg_to_goal) ) )
+            #print(f"   but go backwards, point to {hdg_to_goal}")
+        _add_rotation_to_plan_if_needed(plan, curr_hdg, hdg_to_goal)
         # Now drive straight to the goal position
         thr = -1 if go_backwards else 1
         if (abs(dx) > abs(dy)):
@@ -131,12 +137,7 @@ def _plan_route_to(goal):
             plan.append( (thr, thr, YStopper(curr_y, goal_y)) )
     else:
         # If we're within 2cm of the goal position, just turn in place to final heading
-        (dir, n_deg) = heading_diff(curr_hdg, final_hdg)
-        if n_deg > 5:
-            plan.append( ( -1 if dir == 'left' else 1, 1 if dir == 'left' else -1,
-                        HeadingStopper(curr_hdg, dir, final_hdg) ) )
-        else:
-            plan = None # No plan needed; we're already there
+        _add_rotation_to_plan_if_needed(plan, curr_hdg, final_hdg)
     #print("Planned route:")
     #if plan is not None:
     #    for t in plan:
@@ -147,7 +148,7 @@ def _plan_route_to(goal):
 def _plan_and_start_route():
     global action_queue, nav_goal
     new_plan = _plan_route_to(nav_goal)
-    if new_plan is None or len(new_plan) == 0:
+    if len(new_plan) == 0:
         driving_stop()
         action_queue.clear()
         nav_goal = None
@@ -157,13 +158,29 @@ def _plan_and_start_route():
         # Start the first action right away
         _start_first_action()
 
+# Returns a distance in mm, or None
+def _distance_to_goal_if_any():
+    global nav_goal
+    if nav_goal is None:
+        return None
+    (curr_x, curr_y) = _current_xy()
+    (goal_x, goal_y, goal_hdg) = nav_goal
+    return math.sqrt(math.pow(goal_x-curr_x, 2) + math.pow(goal_y-curr_y, 2))
+
 async def loop_driving():
     global action_queue
     while True:
         await async_sleep(0.01)
-        if len(action_queue) > 0 and action_queue[0][2] is not None:
-            stop_condition = action_queue[0][2]
-            (curr_x, curr_y) = _current_xy()
+        if len(action_queue) == 0:
+            continue
+        (curr_x, curr_y) = _current_xy()
+        (thr_left, thr_right, stop_condition) = action_queue[0]
+        dst_to_goal = _distance_to_goal_if_any()
+        if dst_to_goal is not None and dst_to_goal < 100: # Slow down within 10cm of goal
+            _set_throttles(thr_left * .75, thr_right * .75)
+        else:
+            _set_throttles(thr_left, thr_right)
+        if stop_condition is not None:
             if stop_condition.should_stop(curr_x, curr_y, current_heading()):
                 action_queue.pop(0)
                 if len(action_queue) > 0:
