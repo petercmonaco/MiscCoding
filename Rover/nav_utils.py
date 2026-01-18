@@ -1,4 +1,6 @@
 
+from wifi_and_comms import wlog
+
 def heading_diff(h1, h2):
     """Returns the # degrees left or right to turn from h1 to h2"""
     d = (h2 - h1 + 180) % 360 - 180
@@ -25,10 +27,13 @@ class HeadingStopper:
         return h-360 if h > self.breakpoint else h
     
     def should_stop(self, curr_x, curr_y, curr_hdg):
+        yes_stop = None
         if (self.dir == 'left'):
-            return self._normalize(curr_hdg) <= self.target_hdg
+            yes_stop = self._normalize(curr_hdg) <= self.target_hdg
         else:
-            return self._normalize(curr_hdg) >= self.target_hdg
+            yes_stop = self._normalize(curr_hdg) >= self.target_hdg
+        wlog(f"hstop: At {curr_hdg}, target {self.target_hdg}? {yes_stop}")
+        return yes_stop
         
     def __str__(self):
         return f"HeadingStopper({self.dir} to hdg {self.target_hdg})"
