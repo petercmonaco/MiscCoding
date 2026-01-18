@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
+import adafruit_datetime as datetime
 import os
 import ssl
 from driving import driving_stop, handle_driving_cmd, loop_driving, loop_replan, upover_to_xy
@@ -107,6 +108,14 @@ async def handle_websocket_requests():
 
         await async_sleep(0)
 
+def wlog(msg: str):
+    if websocket is not None:
+        # Get the current date and time as a datetime object
+        now = datetime.datetime.now()
+        # Just show minutes, seconds, milliseconds
+        full_msg = f"WLOG{now.minute:02}:{now.second:02}.{now.microsecond // 1000:03} - {msg}"
+        websocket.send_message(full_msg, fail_silently=True)
+
 async def loop_update_display():
     while True:
         await async_sleep(1)
@@ -116,6 +125,7 @@ async def loop_update_display():
         display_distances(d)
         xy = upover_to_xy(d[0], d[1])
         display_xy(xy)
+        wlog("hello")
 
 async def main():
     await gather(

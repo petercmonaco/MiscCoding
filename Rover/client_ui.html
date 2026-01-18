@@ -134,7 +134,11 @@
             };
 
             socket.onmessage = (event) => {
-                appendMsgLog('<-- ' + event.data, 'received');
+                if (event.data.startsWith("WLOG")) {
+                    appendWlog(event.data.substring(4));
+                } else {
+                    appendMsgLog('<-- ' + event.data, 'received');
+                }
             };
 
             socket.onclose = (event) => {
