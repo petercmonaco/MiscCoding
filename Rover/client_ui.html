@@ -5,16 +5,16 @@
     <title>Whiteboard Rover</title>
     <style>
         body { font-family: sans-serif; max-width: 1200px; margin: 20px auto; }
-        #log { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; margin-bottom: 10px; }
-        #messageInput { width: calc(100% - 70px); padding: 8px; }
+        #msglog { border: 1px solid #ccc; padding: 10px; height: 200px; overflow-y: scroll; margin-bottom: 10px; }
+        #messageInput { width: calc(100% - 100px); padding: 8px; }
         #sendButton { width: 60px; padding: 8px; }
         .sent { color: blue; }
         .received { color: green; }
         .status { color: gray; font-size: 0.8em; }
         .container { display: flex;}
         .div-one, .div-two { flex: 1; padding: 10px;}
-        table { border: 1px solid gray; border-collapse: collapse; }
-        th, td { padding-top: 0px; padding-bottom: 0px; padding-left: 10px; padding-right: 10px; }
+        table { font-size: 12px; color: grey; border: 1px solid gray; border-collapse: collapse; }
+        th, td { border: 1px solid gray; padding-top: 0px; padding-bottom: 0px; padding-left: 10px; padding-right: 10px; }
         .div-one { margin-right: 10px; }
     </style>
 </head>
@@ -22,7 +22,7 @@
     <h1>Whiteboard Rover</h1>
     <div class="container">
         <div class="div-one">
-            <h2>Command Interface</h2>
+            <b style="font-size: 24px;">Messaging Interface</b><br><br>
             <div>
                 <label for="wsUrl">WebSocket URL:</label>
                 <input type="text" id="wsUrl" value="ws://IPADDR:5000/connect-websocket" size="40">
@@ -31,24 +31,24 @@
             </div>
             <p class="status">Status: <span id="connectionStatus">Closed</span></p>
 
-            <div id="log"></div>
+            <div id="msglog"></div>
 
             <form id="messageForm">
                 <input type="text" id="messageInput" placeholder="Type a message...">
                 <button type="submit" id="sendButton" disabled>Send</button>
             </form>
-        </div>
-        <div class="div-two">
-            <h2>Sample Commands</h2>
-            <h4>Driving Commands</h4>
-            <table border="1">
+            <hr>
+
+            <b style="font-size: 16px;">Sample Commands</b><br><br>
+            <b style="font-size: 14px; color: grey">Driving Commands</b>
+            <table >
                 <tr><td>stop<td>Stop all motors; clear navigation plan</tr>
                 <tr><td>drive<td>Drive forward, forever</tr>
                 <tr><td>rotate left/right<td>forever</tr>
                 <tr><td>arc left/right #rad #hdg<td>Drive in an arc, to left or right, with given radius, until reaching given heading</tr>
             </table>
-            <h4>Debug and Operations Commands</h4>
-            <table border="1">
+            <br><b style="font-size: 14px; color: grey">Debug and Operations Commands</b>
+            <table>
                 <tr><td>sleep<td>Put the rover to sleep; wake up with the reset button</tr>
                 <tr><td>ping<td>Request a response, to verify connection</tr>
                 <tr><td>status<td>Request battery level and other info</tr>
@@ -56,12 +56,15 @@
                 <tr><td>servo 0 90<td>Set servo 0 to 90 degrees</tr>
                 <tr><td>servo 0 track<td>Return servo 0 to vertical-tracking mode</tr>
             </table>
+        </div>
+        <div class="div-two">
+            <b style="font-size: 24px;">Log Output</b><br><br>
 
         </div>
     </div>
 
     <script>
-        const log = document.getElementById('log');
+        const msglog = document.getElementById('msglog');
         const messageInput = document.getElementById('messageInput');
         const sendButton = document.getElementById('sendButton');
         const connectButton = document.getElementById('connectButton');
@@ -70,13 +73,13 @@
         const wsUrlInput = document.getElementById('wsUrl');
         let socket;
 
-        function appendLog(message, className) {
+        function appendMsgLog(message, className) {
             const item = document.createElement('div');
             item.classList.add(className);
             item.textContent = new Date().toLocaleTimeString() + " " + message;
-            log.appendChild(item);
+            msglog.appendChild(item);
             // Scroll to the bottom
-            log.scrollTop = log.scrollHeight - log.clientHeight;
+            msglog.scrollTop = msglog.scrollHeight - msglog.clientHeight;
         }
 
         connectButton.addEventListener('click', () => {
@@ -90,11 +93,11 @@
                 connectButton.disabled = true;
                 disconnectButton.disabled = false;
                 sendButton.disabled = false;
-                appendLog('Connection established', 'status');
+                appendMsgLog('Connection established', 'status');
             };
 
             socket.onmessage = (event) => {
-                appendLog('<-- ' + event.data, 'received');
+                appendMsgLog('<-- ' + event.data, 'received');
             };
 
             socket.onclose = (event) => {
@@ -102,11 +105,11 @@
                 connectButton.disabled = false;
                 disconnectButton.disabled = true;
                 sendButton.disabled = true;
-                appendLog('Connection closed', 'status');
+                appendMsgLog('Connection closed', 'status');
             };
 
             socket.onerror = (error) => {
-                appendLog('Error: ' + error.message, 'status');
+                appendMsgLog('Error: ' + error.message, 'status');
             };
         });
 
@@ -121,7 +124,7 @@
             const message = messageInput.value;
             if (socket && socket.readyState === WebSocket.OPEN && message) {
                 socket.send(message);
-                appendLog('--> ' + message, 'sent');
+                appendMsgLog('--> ' + message, 'sent');
                 messageInput.value = ''; // Clear input box
             }
         });
