@@ -1,4 +1,4 @@
-import adafruit_datetime as datetime
+import time
 import os
 import ssl
 import wifi
@@ -74,8 +74,9 @@ def send_message(msg):
 
 def wlog(msg: str):
     if websocket is not None:
-        # Get the current date and time as a datetime object
-        now = datetime.datetime.now()
-        # Just show minutes, seconds, milliseconds
-        full_msg = f"WLOG{now.minute:02}:{now.second:02}.{now.microsecond // 1000:03} - {msg}"
+        # Just show seconds and milliseconds since arbitrary start time
+        total = int(time.monotonic_ns() / 1000000) % 100000
+        ms = total % 1000 # last 3 digits
+        sec = total // 1000 # first 3 digits
+        full_msg = f"WLOG{sec:02}.{ms:03} - {msg}"
         websocket.send_message(full_msg, fail_silently=True)
