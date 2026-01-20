@@ -48,7 +48,7 @@ def _enqueue_action(left_thr, right_thr, stop_condition):
 def handle_driving_cmd(cmd):
     global nav_goal
     cmd_words = cmd.split()
-    if cmd_words[0] not in ['drive', 'stop', 'rotate', 'arc', 'navto']:
+    if cmd_words[0] not in ['drive', 'stop', 'rotate', 'arc', 'navto', 'throttle']:
         return (False, 'Not for me')
     if cmd == 'stop':
         driving_stop()
@@ -59,6 +59,13 @@ def handle_driving_cmd(cmd):
         return _enqueue_action(-1, 1, None)
     if cmd == 'rotate right':
         return _enqueue_action(1, -1, None)
+    if cmd_words[0] == 'throttle':
+        try:
+            left_thr = float(cmd_words[1])
+            right_thr = float(cmd_words[2])
+            return _enqueue_action(left_thr, right_thr, None)
+        except ValueError:
+            return (True, 'Malformed throttle cmd')
     if cmd_words[0] == 'arc':
         try:
             arc_dir = cmd_words[1]
