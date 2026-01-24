@@ -74,12 +74,14 @@ def handle_driving_cmd(cmd):
     global nav_goal
     cmd_words = cmd.split()
     stop_condition = create_stop_condition_if_any(cmd_words)
-    if cmd_words[0] not in ['stop', 'throttle', 'navto']:
+    if cmd_words[0] not in ['stop', 'th', 'navto']:
         return (False, 'Not for me')
     if cmd == 'stop':
         driving_stop()
         return (True, None)
-    if cmd_words[0] == 'throttle':
+    if cmd_words[0] == 'th':
+        if len(cmd_words) != 3:
+            return (True, 'th requires 2-3 arguments')
         try:
             left_thr = float(cmd_words[1])
             right_thr = float(cmd_words[2])
