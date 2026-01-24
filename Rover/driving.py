@@ -45,43 +45,47 @@ def _enqueue_action(left_thr, right_thr, stop_condition):
         _start_first_action()
     return (True, None) # Success
 
+# If the final argument of cmd_words is a stop condition (x=..., y=..., h=...),
+# create and return the appropriate Stopper object.
+# Also removes that last argument from cmd_words.
+def create_stop_condition_if_any(cmd_words):
+    if cmd_words[-1][0:2] not in ['x=', 'y=', 'h=']:
+        return None
+    try:
+        target_type = cmd_words[-1][0]
+        target_val = int(cmd_words[-1][2:])
+    except ValueError:
+        return None
+
+    cmd_words.pop() # Remove the stop condition part
+
+    if target_type == 'x':
+        (curr_x, _) = _current_xy()
+        return XStopper(curr_x, target_val)
+    elif target_type == 'y':
+        (_, curr_y) = _current_xy()
+        return YStopper(curr_y, target_val)
+    elif target_type == 'h':
+        curr_hdg = current_heading()
+        return HeadingStopper(curr_hdg, None, target_val)
+    return None
+
 def handle_driving_cmd(cmd):
     global nav_goal
     cmd_words = cmd.split()
-    if cmd_words[0] not in ['drive', 'stop', 'rotate', 'arc', 'navto', 'throttle']:
+    stop_condition = create_stop_condition_if_any(cmd_words)
+    if cmd_words[0] not in ['stop', 'throttle', 'navto']:
         return (False, 'Not for me')
     if cmd == 'stop':
         driving_stop()
         return (True, None)
-    if cmd == 'drive':
-        return _enqueue_action(1, 1, None)
-    if cmd == 'rotate left':
-        return _enqueue_action(-1, 1, None)
-    if cmd == 'rotate right':
-        return _enqueue_action(1, -1, None)
     if cmd_words[0] == 'throttle':
         try:
             left_thr = float(cmd_words[1])
             right_thr = float(cmd_words[2])
-            return _enqueue_action(left_thr, right_thr, None)
+            return _enqueue_action(left_thr, right_thr, stop_condition)
         except ValueError:
             return (True, 'Malformed throttle cmd')
-    if cmd_words[0] == 'arc':
-        try:
-            arc_dir = cmd_words[1]
-            arc_radius = int(cmd_words[2])
-            arc_stop_at_hdg = int(cmd_words[3])
-            inner_wheel_speed = (arc_radius - (WHEEL_SEP / 2)) / (arc_radius + (WHEEL_SEP / 2))
-            stop_condition = HeadingStopper(current_heading(), arc_dir, arc_stop_at_hdg)
-            if arc_dir == 'left':
-                _enqueue_action(inner_wheel_speed, 1, stop_condition)
-            elif arc_dir == 'right':
-                _enqueue_action(1, inner_wheel_speed, stop_condition)
-            else:
-                return (True, 'Invalid arc direction')
-            return (True, None)
-        except ValueError:
-            return (True, 'Malformed arc cmd')
     if cmd_words[0] == 'navto':
         if len(cmd_words) != 4:
             return (True, 'navto requires 3 arguments')

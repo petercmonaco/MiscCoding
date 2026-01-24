@@ -7,9 +7,15 @@ def heading_diff(h1, h2):
     return ('left' if d < 0 else 'right', abs(d))
 
 # This class helps determine when to stop turning, given
-# an initial heading, direction of turn, and target heading.
+# - initial heading
+# - direction of turn (None means choose the shortest)
+# - target heading.
 class HeadingStopper:
     def __init__(self, curr_hdg, dir, target_hdg):
+
+        if dir is None:
+            dir = 'left' if ((target_hdg - curr_hdg) % 360) > 180 else 'right'
+
         # In the heading circle (0...360), it's the discontinuity at 0/360 that causes problems.
         # This code creates a new 'breakpoint', and normalizes headings so they have a
         # coninuous sequence of values from one side of the breakpoint to the other.
@@ -22,6 +28,7 @@ class HeadingStopper:
         else:
             self.breakpoint = midpoint
         self.target_hdg = self._normalize(target_hdg)
+        wlog(f"hstop: curr {curr_hdg}, target {target_hdg}, dir {dir}, breakpoint {self.breakpoint}, norm target {self.target_hdg}")
 
     def _normalize(self, h):
         return h-360 if h > self.breakpoint else h
