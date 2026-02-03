@@ -16,3 +16,12 @@ expect_y(l1, 0, 3)
 expect_y(l1, 2, 4)
 expect_y(l1, 6, 6)
 
+# Now test with an arc of points
+l2 = nav_learning.RegressionLearner(0, 0, 6, 0, 10)
+l2.add_point(1, 1)
+l2.add_point(2, 2)
+l2.add_point(3, 3)
+l2.add_point(4, 2)
+l2.add_point(5, 1)
+expect_y(l2, 0, 9/7)
+expect_y(l2, 3, 9/7)
