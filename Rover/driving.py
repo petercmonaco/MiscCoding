@@ -4,7 +4,7 @@ from adafruit_motorkit import MotorKit
 from imu import current_heading
 from lidar import get_distances
 from nav_utils import HeadingStopper, XStopper, YStopper, heading_diff
-from nav_learning import set_wlogger as set_navlearner_wlog, learn as nav_learn
+from nav_learning import set_wlogger as set_navlearner_wlog, learn as nav_learn, suggest_throttles
 from wifi_and_comms import wlog
 
 # Motor Stuff
@@ -149,12 +149,16 @@ def _plan_route_to(goal):
             #print(f"   but go backwards, point to {hdg_to_goal}")
         _add_rotation_to_plan_if_needed(plan, curr_hdg, hdg_to_goal)
         # Now drive straight to the goal position
-        thr = -1 if go_backwards else 1
+        (thr1, thr2) = suggest_throttles(hdg_to_goal, 0)
+        if go_backwards:
+            thr1 = -thr1
+            thr2 = -thr2
+        wlog(f"Planning straight drive with suggested throttles: {thr1}, {thr2}")
         if (abs(dx) > abs(dy)):
             # More X movement than Y movement
-            plan.append( (thr, thr, XStopper(curr_x, goal_x)) )
+            plan.append( (thr1, thr2, XStopper(curr_x, goal_x)) )
         else:
-            plan.append( (thr, thr, YStopper(curr_y, goal_y)) )
+            plan.append( (thr1, thr2, YStopper(curr_y, goal_y)) )
     else:
         # If we're within 2cm of the goal position, just turn in place to final heading
         _add_rotation_to_plan_if_needed(plan, curr_hdg, final_hdg)
