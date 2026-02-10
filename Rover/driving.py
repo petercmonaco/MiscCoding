@@ -4,14 +4,32 @@ from adafruit_motorkit import MotorKit
 from imu import current_heading
 from lidar import get_distances
 from nav_utils import HeadingStopper, XStopper, YStopper, heading_diff
+from nav_learning import set_wlogger as set_navlearner_wlog, learn as nav_learn
+from wifi_and_comms import wlog
 
 # Motor Stuff
 motorkit = MotorKit() # Implicit args: address=0x60, i2c=board.I2C()
+set_navlearner_wlog(wlog)
 
+def upover_to_xy(up_mm, over_mm):
+    x = 1160 - over_mm  # mm
+    y = 1060 - up_mm    # mm
+    return (x, y)
+
+def _current_xy():
+    [dst_up, dist_over] = get_distances()
+    x = 1160 - dist_over  # mm
+    y = 1060 - dst_up     # mm
+    return (x, y)
 
 def _set_throttles(thr1, thr2):
     motorkit.motor1.throttle = thr1
     motorkit.motor2.throttle = thr2
+    try:
+        (x, y)= _current_xy()
+        nav_learn(thr1, thr2, x, y, current_heading())
+    except Exception as e:
+        pass
     return (True, None) # Success; returning this tuple is helpful for next layer up
 
 WHEEL_SEP = 98 # mm
@@ -102,17 +120,6 @@ def handle_driving_cmd(cmd):
             return (True, 'Malformed navto command')
     else:
         return (True, 'Malformed driving command')
-
-def upover_to_xy(up_mm, over_mm):
-    x = 1160 - over_mm  # mm
-    y = 1060 - up_mm    # mm
-    return (x, y)
-
-def _current_xy():
-    [dst_up, dist_over] = get_distances()
-    x = 1160 - dist_over  # mm
-    y = 1060 - dst_up     # mm
-    return (x, y)
 
 def _add_rotation_to_plan_if_needed(plan, hdg1, hdg2):
     (dir, n_deg) = heading_diff(hdg1, hdg2)

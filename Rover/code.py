@@ -8,6 +8,7 @@ from lidar import loop_read_lidar, get_distances
 from asyncio import create_task, gather, run
 from asyncio import sleep as async_sleep
 from display import display_cmd, display_battery, display_distances, display_heading, display_xy
+from nav_learning import dump_learners
 from servos import loop_point_lidar, handle_servo_cmd
 import board
 import alarm
@@ -39,6 +40,8 @@ def execute_cmd(cmd):
         #send_message(",".join([str(d) for d in dvals1]))
         #send_message(f"Over: Collected {len(dvals2)} distance readings")
         #send_message(",".join([str(d) for d in dvals2]))
+    elif cmd == 'dump_learners':
+        dump_learners()
     else:
         for cmd_handler in [handle_driving_cmd, handle_servo_cmd]:
             (is_for_me, msg) = cmd_handler(cmd)
@@ -59,7 +62,6 @@ async def loop_update_display():
         display_distances(d)
         xy = upover_to_xy(d[0], d[1])
         display_xy(xy)
-        wlog("hello")
 
 async def main():
     await gather(
